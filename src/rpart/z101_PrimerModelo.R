@@ -2,12 +2,15 @@
 #Debe tener instaladas las librerias  data.table  ,  rpart  y  rpart.plot
 
 #cargo las librerias que necesito
+install.packages( "data.table", dependencies=TRUE )
+install.packages("rpart")
+install.packages("rpart.plot")
 require("data.table")
 require("rpart")
 require("rpart.plot")
 
 #Aqui se debe poner la carpeta de la materia de SU computadora local
-setwd("D:\\gdrive\\UBA2022\\")  #Establezco el Working Directory
+setwd("C:\\Users\\Marie\\Documents\\MasterUBA\\DMEyF")  #Establezco el Working Directory
 
 #cargo el dataset
 dataset  <- fread("./datasets/competencia1_2022.csv")
@@ -51,3 +54,4 @@ dir.create( "./exp/KA2001" )
 fwrite( dapply[ , list(numero_de_cliente, Predicted) ], #solo los campos para Kaggle
         file= "./exp/KA2001/K101_001.csv",
         sep=  "," )
+
