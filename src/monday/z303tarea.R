@@ -82,7 +82,7 @@ obj_fun_md_ms <- function(x) {
   experimento_rpart(dataset, semillas
                     , md = x$maxdepth
                     , ms = x$minsplit
-                    , mb = floor(x$fracminbucket*x$minsplit))
+                    , mb = floor(x$minbucket*x$minsplit))
 }
 
 obj_fun <- makeSingleObjectiveFunction(
@@ -91,7 +91,7 @@ obj_fun <- makeSingleObjectiveFunction(
   par.set = makeParamSet(
     makeIntegerParam("maxdepth",  lower = 4L, upper = 30L),
     makeIntegerParam("minsplit",  lower = 1L, upper = 200L),
-    makeNumericParam("fracminbucket",  lower = 0L, upper = 2L)
+    makeNumericParam("minbucket",  lower = 0L, upper = 2L)
     # makeNumericParam <- para parámetros continuos
   ),
   # noisy = TRUE,
@@ -99,13 +99,13 @@ obj_fun <- makeSingleObjectiveFunction(
 )
 
 ctrl <- makeMBOControl()
-ctrl <- setMBOControlTermination(ctrl, iters = 50L) #modificar mas mejor
+ctrl <- setMBOControlTermination(ctrl, iters = 200L) #modificar mas mejor
 ctrl <- setMBOControlInfill(
   ctrl,
   crit = makeMBOInfillCritEI(),
   opt = "focussearch",
   # sacar parámetro opt.focussearch.points en próximas ejecuciones
-  opt.focussearch.points = 20
+  #opt.focussearch.points = 2000
 )
 
 
@@ -120,7 +120,7 @@ print(t1 - t0)
 
 print(run_md_ms)
 
-#Time difference of 32.54243 mins
+#Time difference of 2.207402 hours
 #Recommended parameters:
-#  maxdepth=22; minsplit=16; fracminbucket=0.727
-#Objective: y = 19272000.000
+# maxdepth=11; minsplit=154; fracminbucket=3.57e-05
+#Objective: y = 19701333.333

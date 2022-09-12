@@ -21,9 +21,9 @@ require("ggplot2")
 
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("/home/aleb/dmeyf2022")
+setwd("C:\\Users\\Marie\\Documents\\MasterUBA\\DMEyF")
 # Poner sus semillas
-semillas <- c(17, 19, 23, 29, 31)
+semillas <- c(432557, 892597, 998197, 214733, 502321)
 
 # Cargamos el dataset
 dataset <- fread("./datasets/competencia1_2022.csv")
@@ -248,10 +248,10 @@ resultados_grid_search <- data.table()
 
 # Complete los valores que se van a combinar para cada parámetro a explorar
 
-for (cp in c(-1, 0.01)) {
-for (md in c(5, 10)) {
-for (ms in c(1, 50)) {
-for (mb in c(1, as.integer(ms / 2))) {
+for (cp in c(-1, 0.001, 0.01, 0.1, 0)) {
+for (md in c(5, 10, 15, 20, 25, 30)) { 
+for (ms in c(1, 50, 100, 150, 200)) {
+for (mb in c(1, as.integer(ms / 1),as.integer(ms / 1.5),as.integer(ms / 2),as.integer(ms / 3))) {
 
     t0 <- Sys.time()
     gan_semillas <- c()

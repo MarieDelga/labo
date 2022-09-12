@@ -21,9 +21,9 @@ require("treeClust")
 require("ggplot2")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("/home/aleb/dmeyf2022")
+setwd("C:\\Users\\Marie\\Documents\\MasterUBA\\DMEyF")
 # Poner sus semillas
-semillas <- c(17, 19, 23, 29, 31)
+semillas <- c(432557, 892597, 998197, 214733, 502321)
 
 # Cargamos el dataset
 dataset <- fread("./datasets/competencia1_2022.csv")
@@ -110,6 +110,7 @@ print(sum(
 ## Preguntas
 ## ¿Obtuvo una importante mejora en su modelo?
 ## ¿Qué detalle fue creado con la clase BAJA+2 en mente que ya no aplica?
+al combinar clase, rebalanceo y tengo que modificar el punto de corte 1/20
 
 ## ---------------------------
 ## Step 4: De árboles a tablas, la venganza
@@ -175,7 +176,7 @@ train_bin2[, n_acum := cumsum(n) / 0.7]
 print(train_bin2)
 
 # La ganancia en train para el punto de corte de 0.025 es
-train_bin2[p >= 0.025, sum(gan) / 0.7]
+train_bin2[p >= 0.05, sum(gan) / 0.7]
 
 # Podemos buscar el punto de corte optimo con un par de sentencias de R
 pos_max_gan <- which.max(train_bin2$gan_acum)
@@ -281,3 +282,5 @@ for (s in semillas) {
 ## - ¿Qué estrategia piensa que puede ser útil para elegir el punto de corte?
 ## - ¿Para la búsqueda del mejor modelo que valor va a usar para la OB?
 ## - ¿Pros y contras de elegir los N mejores casos?
+
+benajmin y hopcher

@@ -24,9 +24,11 @@ require("DiceKriging")
 require("mlrMBO")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("/home/aleb/dmeyf2022")
+setwd("C:\\Users\\Marie\\Documents\\MasterUBA\\DMEyF")
 # Poner sus semillas
-semillas <- c(17, 19, 23, 29, 31)
+semillas <- c(432557, 892597, 998197, 214733, 502321)
+
+#semillas <- c(238001,257687, 564227,785501,956341) #semillas agos
 
 # Cargamos el dataset
 dataset <- fread("./datasets/competencia1_2022.csv")
@@ -173,6 +175,7 @@ table(dataset[ds_sample]$clase_binaria)
 ## - ¿Es bueno muestrear?
 ## - ¿Qué efectos en las métricas va a producir el muestreo?
 ## - ¿Por qué se eligió usar el AUC?
+#el auc no se ve afectada por el desbalanceo de los datos,cuando el modelo esta rebalanceado, 
 ## - ¿Qué hay que cambiar en la función de ganancia para poder utilizarla?
 
 ## ---------------------------
@@ -261,8 +264,10 @@ ggplot(resultados_random_search, aes(x = md, y = ms, color = auc)) +
 ## ---------------------------
 ## Step 8: Trabajando con herramientas más profesionales
 ## ---------------------------
-
+###BUSCAR DECENSO DE GRADIENTES
+###estocastico, busca valores aleatorios
 # Veamos un ejemplo
+###OPTIMIZACION BAYESIANA
 set.seed(semillas[1])
 obj_fun <- makeSingleObjectiveFunction(
   name = "Sine",
@@ -277,6 +282,8 @@ ctrl <- setMBOControlInfill(ctrl, crit = makeMBOInfillCritEI(),
 
 lrn <- makeMBOLearner(ctrl, obj_fun)
 design <- generateDesign(6L, getParamSet(obj_fun), fun = lhs::maximinLHS)
+#
+
 
 run <- exampleRun(obj_fun, design = design, learner = lrn,
                  control = ctrl, points.per.dim = 100, show.info = TRUE)
@@ -388,3 +395,45 @@ print(run_md_ms)
 ## Agregue todos los parámetros que considere. Una vez que tenga sus mejores
 ## parámetros, haga una copia del script rpart/z101_PrimerModelo.R, cambie los
 ## parámetros dentro del script, ejecutelo y suba a Kaggle su modelo.
+
+
+set.seed(semillas[1])
+obj_fun_md_ms <- function(x) {
+  experimento_rpart(dataset, semillas
+                    , md = x$maxdepth
+                    , ms = x$minsplit
+                    , mb = floor(x$minbucket*x$minsplit))
+}
+
+obj_fun <- makeSingleObjectiveFunction(
+  minimize = FALSE,
+  fn = obj_fun_md_ms,
+  par.set = makeParamSet(
+    makeIntegerParam("maxdepth",  lower = 4L, upper = 100L),
+    makeIntegerParam("minsplit",  lower = 1L, upper = 200L),
+    makeNumericParam("minbucket",  lower = 0L, upper = 2L)
+    # makeNumericParam <- para parámetros continuos
+  ),
+  # noisy = TRUE,
+  has.simple.signature = FALSE
+)
+
+ctrl <- makeMBOControl()
+ctrl <- setMBOControlTermination(ctrl, iters = 50L) #modificar mas mejor
+ctrl <- setMBOControlInfill(
+  ctrl,
+  crit = makeMBOInfillCritEI(),
+  opt = "focussearch",
+  # sacar parámetro opt.focussearch.points en próximas ejecuciones
+  opt.focussearch.points = 20
+)
+
+lrn <- makeMBOLearner(ctrl, obj_fun)
+
+surr_km <- makeLearner("regr.km", predict.type = "se", covtype = "matern3_2")
+
+run_md_ms <- mbo(obj_fun, learner = surr_km, control = ctrl, )
+print(run_md_ms)
+
+
+#tarea de verdad, repetir para todos los datos, con la funcion de ganancia

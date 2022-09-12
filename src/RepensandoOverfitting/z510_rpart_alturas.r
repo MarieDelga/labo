@@ -5,7 +5,7 @@ gc()             #garbage collection
 require("data.table")
 require("rpart")
 
-setwd("." )  #establezco la carpeta donde voy a trabajar
+setwd("C:\\Users\\Marie\\Documents\\MasterUBA\\DMEyF") #establezco la carpeta donde voy a trabajar
 #cargo el dataset
 dataset  <- fread( "./datasets/competencia1_2022.csv")
 

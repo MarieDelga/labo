@@ -23,14 +23,6 @@ dataset <- fread("./datasets/competencia1_2022.csv")
 # Nos quedamos solo con el 202101
 dataset <- dataset[foto_mes == 202101]
 
-# Creamos una clase binaria
-dataset[, clase_binaria := ifelse(
-  clase_ternaria == "BAJA+2",
-  "evento",
-  "noevento"
-)]
-# Borramos el target viejo
-dataset[, clase_ternaria := NULL]
 
 # Seteamos nuestra primera semilla
 set.seed(semillas[1])
@@ -38,7 +30,7 @@ set.seed(semillas[1])
 # funcion ganancia
 ganancia <- function(probabilidades, clase) {
   return(sum(
-    (probabilidades >= 0.025) * ifelse(clase == "evento", 78000, -2000))
+    (probabilidades >= 0.025) * ifelse(clase == "BAJA+2", 78000, -2000))
   )
 }
 
@@ -46,7 +38,7 @@ ganancia <- function(probabilidades, clase) {
 
 # Armamos una función para modelar con el fin de simplificar el código futuro
 modelo_rpart <- function(train, test, cp =  0, ms = 20, mb = 1, md = 10) {
-  modelo <- rpart(clase_binaria ~ ., data = train,
+  modelo <- rpart(clase_ternaria ~ ., data = train,
                   xval = 0,
                   cp = cp,
                   minsplit = ms,
@@ -54,7 +46,7 @@ modelo_rpart <- function(train, test, cp =  0, ms = 20, mb = 1, md = 10) {
                   maxdepth = md)
   
   test_prediccion <- predict(modelo, test, type = "prob")
-  ganancia(test_prediccion[, "evento"], test$clase_binaria) / 0.3
+  ganancia(test_prediccion[, "BAJA+2"], test$clase_ternaria) / 0.3
   
 }
 
@@ -64,7 +56,7 @@ experimento_rpart <- function(ds, semillas, cp = 0, ms = 20, mb = 1, md = 10) {
   gan <- c()
   for (s in semillas) {
     set.seed(s)
-    in_training <- caret::createDataPartition(ds$clase_binaria, p = 0.70,
+    in_training <- caret::createDataPartition(ds$clase_ternaria, p = 0.70,
                                               list = FALSE)
     train  <-  ds[in_training, ]
     test   <-  ds[-in_training, ]
@@ -99,7 +91,7 @@ obj_fun <- makeSingleObjectiveFunction(
 )
 
 ctrl <- makeMBOControl()
-ctrl <- setMBOControlTermination(ctrl, iters = 50L) #modificar mas mejor
+ctrl <- setMBOControlTermination(ctrl, iters = 500L) #modificar mas mejor
 ctrl <- setMBOControlInfill(
   ctrl,
   crit = makeMBOInfillCritEI(),
@@ -120,7 +112,7 @@ print(t1 - t0)
 
 print(run_md_ms)
 
-#Time difference of 32.54243 mins
+#Time difference of 2.896301 hours
 #Recommended parameters:
-#  maxdepth=22; minsplit=16; fracminbucket=0.727
-#Objective: y = 19272000.000
+# maxdepth=13; minsplit=16; fracminbucket=0.596
+#Objective: y = 19278666.667

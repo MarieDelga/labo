@@ -90,7 +90,7 @@ obj_fun <- makeSingleObjectiveFunction(
   fn = obj_fun_md_ms,
   par.set = makeParamSet(
     makeIntegerParam("maxdepth",  lower = 4L, upper = 30L),
-    makeIntegerParam("minsplit",  lower = 1L, upper = 200L),
+    makeIntegerParam("minsplit",  lower = 1L, upper = 5000L),
     makeNumericParam("fracminbucket",  lower = 0L, upper = 2L)
     # makeNumericParam <- para parámetros continuos
   ),
@@ -99,7 +99,7 @@ obj_fun <- makeSingleObjectiveFunction(
 )
 
 ctrl <- makeMBOControl()
-ctrl <- setMBOControlTermination(ctrl, iters = 50L) #modificar mas mejor
+ctrl <- setMBOControlTermination(ctrl, iters = 500L) #modificar mas mejor
 ctrl <- setMBOControlInfill(
   ctrl,
   crit = makeMBOInfillCritEI(),
@@ -120,7 +120,7 @@ print(t1 - t0)
 
 print(run_md_ms)
 
-#Time difference of 32.54243 mins
+#Time difference of 
 #Recommended parameters:
-#  maxdepth=22; minsplit=16; fracminbucket=0.727
-#Objective: y = 19272000.000
+# 
+#Objective:

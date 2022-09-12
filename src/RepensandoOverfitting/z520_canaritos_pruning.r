@@ -6,7 +6,7 @@ require("data.table")
 require("rpart")
 require("rpart.plot")
 
-setwd("." )  #establezco la carpeta donde voy a trabajar
+setwd("C:\\Users\\Marie\\Documents\\MasterUBA\\DMEyF")  #establezco la carpeta donde voy a trabajar
 #cargo el dataset
 dataset  <- fread( "./datasets/competencia1_2022.csv")
 
@@ -36,6 +36,13 @@ modelo_original <- rpart(
 modelo_original$frame[ modelo_original$frame$var %like% "canarito", "complexity"] <- -666
 modelo_pruned  <- prune(  modelo_original, -666 )
 
+print(modelo_pruned$variable.importance)
+
+
+
+
+
+
 prediccion  <- predict( modelo_pruned, dapply, type = "prob")[,"BAJA+2"]
 
 entrega  <-  as.data.table( list( "numero_de_cliente"= dapply$numero_de_cliente,
@@ -47,3 +54,8 @@ pdf(file = "./work/stopping_at_canaritos.pdf", width=28, height=4)
 prp(modelo_pruned, extra=101, digits=5, branch=1, type=4, varlen=0, faclen=0)
 dev.off()
 
+
+matar variables fuera de los canaritos
+matar el primer nodo a ver que pasa - 
+variables ranquedas/bineadas
+sacar variables correlacionadas

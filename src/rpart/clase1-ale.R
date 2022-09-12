@@ -536,5 +536,182 @@ ggplot() + aes(resultados_n_mcv) + geom_density()
 
 
 
+## ---------------------------
+## Step 7: Midiendo nuestras semillas
+## ---------------------------
 
+resultados_mis_semillas <- c()
+
+t0 <- Sys.time()
+for (s in semillas) {
+  set.seed(s)
+  in_training <- caret::createDataPartition(dataset[, get("clase_binaria")],
+                                            p = 0.70, list = FALSE)
+  dtrain  <-  dataset[in_training, ]
+  dtest   <-  dataset[-in_training, ]
+  
+  modelo <- rpart(clase_binaria ~ .,
+                  data = dtrain,
+                  xval = 0,
+                  cp = 0,
+                  minsplit = 20,
+                  minbucket = 1,
+                  maxdepth = 5)
+  
+  pred_testing <- predict(modelo, dtest, type = "prob")
+  
+  gan <- ganancia(pred_testing[, "evento"], dtest$clase_binaria) / 0.3
+  
+  resultados_mis_semillas <- c(resultados_mis_semillas, gan)
+  
+}
+print(Sys.time() - t0)
+
+print(mean(resultados_mis_semillas))
+
+## Preguntas
+## - ¿Cuán lejos se encontró la media de sus semillas respecto a los resultados
+##    anteriores?
+## - ¿Usaría semillas que le den un valor promedio más alto?
+## - ¿Usaría más semillas?
+## - ¿Que ventaja y desventaja ve en usar más semillas?
+
+
+
+
+
+
+
+
+
+
+## ---------------------------
+## Step 8: Buscando un mejor modelo
+## ---------------------------
+
+resultados_grid_search <- data.table()
+
+# Complete los valores que se van a combinar para cada parámetro a explorar
+t0 <- Sys.time()
+for (cp in c(-1, 0.1, 0.05, 0.01)) {
+  for (md in c(5, 10, 30)) {
+    for (ms in c(1,5, 10, 30, 50)) {
+      for (mb in c(1, as.integer(ms / 2))) {
+        
+        t0 <- Sys.time()
+        gan_semillas <- c()
+        for (s in semillas) {
+          set.seed(s)
+          in_training <- caret::createDataPartition(dataset[,
+                                                            get("clase_binaria")],
+                                                    p = 0.70, list = FALSE)
+          dtrain  <-  dataset[in_training, ]
+          dtest   <-  dataset[-in_training, ]
+          
+          modelo <- rpart(clase_binaria ~ .,
+                          data = dtrain,
+                          xval = 0,
+                          cp = cp,
+                          minsplit = ms,
+                          minbucket = mb,
+                          maxdepth = md)
+          
+          pred_testing <- predict(modelo, dtest, type = "prob")
+          gan <- ganancia(pred_testing[, "evento"], dtest$clase_binaria) / 0.3
+          
+          gan_semillas <- c(gan_semillas, gan)
+        }
+        tiempo <-  as.numeric(Sys.time() - t0, units = "secs")
+        
+        resultados_grid_search <- rbindlist(list(
+          resultados_grid_search,
+          data.table(
+            tiempo = tiempo,
+            cp = cp,
+            mb = mb,
+            ms = ms,
+            md = md,
+            gan = mean(gan_semillas))
+        ))
+      }
+    }
+  }
+}
+print(Sys.time() - t0)
+# Visualizo los parámetros de los mejores parámetros
+View(resultados_grid_search[gan == max(gan), ])
+
+# cp -1  mb 25  ms 50  md 5  gan 19856000
+
+
+
+## TAREA:
+## Una vez que tenga sus mejores parámetros, haga una copia del script
+## rpart/z101_PrimerModelo.R, cambie los parámetros dentro del script,
+## ejecutelo y suba a Kaggle su modelo.
+
+## Preguntas
+## - ¿Cuál es la diferencia entre **test** y **validation**?
+## - ¿Cuántas veces podemos usar el conjunto de **test** sin
+##   convertirlo en **validation**?
+##
+## La GRAN pregunta:
+## - ¿Qué otra cosita de la materia tiene una partición 70 / 30?
+## - Todo lo que hemos visto ¿Va a afectar a esa cosita?
+
+
+
+# Complete los valores que se van a combinar para cada parámetro a explorar
+t0 <- Sys.time()
+for (cp in c(-1, 0.99, 0.95, 0.9, 0.85, 0.8, 0.75)) {
+  for (md in c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20)) {
+    for (ms in c(1,5, 10,15,20,25, 30,35,40,45, 50,55,60,65,70,75,80,85,90)) {
+      for (mb in c(1, as.integer(ms / 2),as.integer(ms / 3),as.integer(ms / 4),as.integer(ms / 5))) {
+        
+        t0 <- Sys.time()
+        gan_semillas <- c()
+        for (s in semillas) {
+          set.seed(s)
+          in_training <- caret::createDataPartition(dataset[,
+                                                            get("clase_binaria")],
+                                                    p = 0.70, list = FALSE)
+          dtrain  <-  dataset[in_training, ]
+          dtest   <-  dataset[-in_training, ]
+          
+          modelo <- rpart(clase_binaria ~ .,
+                          data = dtrain,
+                          xval = 0,
+                          cp = cp,
+                          minsplit = ms,
+                          minbucket = mb,
+                          maxdepth = md)
+          
+          pred_testing <- predict(modelo, dtest, type = "prob")
+          gan <- ganancia(pred_testing[, "evento"], dtest$clase_binaria) / 0.3
+          
+          gan_semillas <- c(gan_semillas, gan)
+        }
+        tiempo <-  as.numeric(Sys.time() - t0, units = "secs")
+        
+        resultados_grid_search <- rbindlist(list(
+          resultados_grid_search,
+          data.table(
+            tiempo = tiempo,
+            cp = cp,
+            mb = mb,
+            ms = ms,
+            md = md,
+            gan = mean(gan_semillas))
+        ))
+      }
+    }
+  }
+}
+print(Sys.time() - t0)
+
+
+View(resultados_grid_search)
+
+# Visualizo los parámetros de los mejores parámetros
+View(resultados_grid_search[gan == max(gan), ])
 

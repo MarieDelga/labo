@@ -10,7 +10,7 @@
 
 # Limpiamos el entorno
 rm(list = ls())
-gc(verbose = FALSE)
+gc(verbose = FALSE) #garbage collection
 
 # Librerías necesarias
 require("data.table")
@@ -19,12 +19,13 @@ require("ggplot2")
 require("dplyr")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("/home/aleb/dmeyf2022")
+setwd("C:\\Users\\Marie\\Documents\\MasterUBA\\DMEyF") 
+
 # Poner sus semillas
-semillas <- c(17, 19, 23, 29, 31)
+semillas <- c(432557, 892597, 998197, 214733, 502321) #(combinar) creamos vector
 
 # Cargamos el dataset
-dataset <- fread("./datasets/competencia1_2022.csv")
+dataset <- fread("./datasets/competencia1_2022.csv") #Fast and friendly file finagler Similar to read.table but faster and more convenient
 
 # Nos quedamos solo con el 202101
 dataset <- dataset[foto_mes == 202101]
@@ -36,27 +37,29 @@ dataset[, clase_binaria := ifelse(
                                 "noevento"
                             )]
 # Borramos el target viejo
-dataset[, clase_ternaria := NULL]
+#dataset[, clase_ternaria := NULL]
 
 set.seed(semillas[1])
 
 # Particionamos de forma estratificada
-in_training <- caret::createDataPartition(dataset$clase_binaria,
-                     p = 0.70, list = FALSE)
+in_training <- caret::createDataPartition(dataset$clase_ternaria,
+                     p = 0.70, list = FALSE) ##?? que hace list??
+
 dtrain  <-  dataset[in_training, ]
 dtest   <-  dataset[-in_training, ]
 
 calcular_ganancia <- function(modelo, test) {
     pred_testing <- predict(modelo, test, type = "prob")
     sum(
-        (pred_testing[, "evento"] >= 0.025) * ifelse(test$clase_binaria == "evento",
-                                         78000, -2000) / 0.3
+        (pred_testing[, "BAJA+2"] >= 0.025) * ifelse(test$clase_ternaria == "BAJA+2",
+                                         78000, -2000) / 0.3 ###????poruqe dividido 3
     )
-}
+} ##?? porque no tiene return??
 
 ## ---------------------------
 ## Step 2: Importancia de variables
 ## ---------------------------
+###para arbol cuenta cuantas veces se us para cortar
 
 # Antes de empezar vamos a ver la importancia de variables
 modelo <- rpart(clase_binaria ~ .,
@@ -65,7 +68,7 @@ modelo <- rpart(clase_binaria ~ .,
                 cp = -1,
                 minsplit = 20,
                 minbucket = 10,
-                maxdepth = 5)
+                maxdepth = 7)
 
 calcular_ganancia(modelo, dtest)
 
@@ -89,6 +92,9 @@ summary(modelo)
 ## Preguntas
 ## - ¿Cómo operó con la variable nula?
 ## - ¿Hace falta imputar las variables para que el árbol abra?
+
+###variables subrrogadas tienen cortamiento similar a otra veriables
+###los datos faltantes usan la varables subrogada para elegir rama.
 
 ## ---------------------------
 ## Step 3: Datos nulos - Metiendo mano
@@ -126,6 +132,136 @@ dtest[, Visa_fechaalta_2 := ifelse(is.na(Visa_fechaalta),
             Visa_fechaalta)] 
 
 calcular_ganancia(modelo2, dtest)
+###17533333
+
+###reemplazon con un valor muy grando
+
+
+
+# Numero de nulos en variable Visa_fechaalta
+print(sum(is.na(dtrain$Visa_fechaalta)))
+
+# Imputamos los nulos de nuestra variable con ceros
+dtrain[, Visa_fechaalta_2 := ifelse(is.na(Visa_fechaalta), 
+                                    15000,
+                                    Visa_fechaalta)] 
+
+# Chequeamos el número de nulos de la nueva variable
+print(sum(is.na(dtrain$Visa_fechaalta_2)))
+
+# Comparamos las estadísticas de ambas variables
+summary(dtrain$Visa_fechaalta)
+summary(dtrain$Visa_fechaalta_2)
+
+# Hacemos un modelo sin la variable vieja
+modelo2 <- rpart(clase_binaria ~ . - Visa_fechaalta,
+                 data = dtrain,
+                 xval = 0,
+                 cp = -1,
+                 minsplit = 20,
+                 minbucket = 10,
+                 maxdepth = 5)
+
+print(modelo2$variable.importance)
+
+# Para calcular la ganancia hay que agregar la variable a test
+dtest[, Visa_fechaalta_2 := ifelse(is.na(Visa_fechaalta), 
+                                   0,
+                                   Visa_fechaalta)] 
+
+calcular_ganancia(modelo2, dtest)
+###15173333
+
+
+
+###reemplazon con -1
+
+
+
+# Numero de nulos en variable Visa_fechaalta
+print(sum(is.na(dtrain$Visa_fechaalta)))
+
+# Imputamos los nulos de nuestra variable con ceros
+dtrain[, Visa_fechaalta_2 := ifelse(is.na(Visa_fechaalta), 
+                                    -1,
+                                    Visa_fechaalta)] 
+
+# Chequeamos el número de nulos de la nueva variable
+print(sum(is.na(dtrain$Visa_fechaalta_2)))
+
+# Comparamos las estadísticas de ambas variables
+summary(dtrain$Visa_fechaalta)
+summary(dtrain$Visa_fechaalta_2)
+
+# Hacemos un modelo sin la variable vieja
+modelo2 <- rpart(clase_binaria ~ . - Visa_fechaalta,
+                 data = dtrain,
+                 xval = 0,
+                 cp = -1,
+                 minsplit = 20,
+                 minbucket = 10,
+                 maxdepth = 5)
+
+print(modelo2$variable.importance)
+
+# Para calcular la ganancia hay que agregar la variable a test
+dtest[, Visa_fechaalta_2 := ifelse(is.na(Visa_fechaalta), 
+                                   0,
+                                   Visa_fechaalta)] 
+
+calcular_ganancia(modelo2, dtest)
+###17533333
+
+
+
+###creo variabke oara los nulls
+
+# Imputamos los nulos de nuestra variable con ceros
+dtrain[, Visa_fechaalta_null := ifelse(is.na(Visa_fechaalta), 
+                                    1,
+                                    0)] 
+
+# Numero de nulos en variable Visa_fechaalta
+print(sum(is.na(dtrain$Visa_fechaalta)))
+
+# Imputamos los nulos de nuestra variable con ceros
+dtrain[, Visa_fechaalta_2 := ifelse(is.na(Visa_fechaalta), 
+                                    0,
+                                    Visa_fechaalta)] 
+
+# Chequeamos el número de nulos de la nueva variable
+print(sum(is.na(dtrain$Visa_fechaalta_2)))
+
+# Comparamos las estadísticas de ambas variables
+summary(dtrain$Visa_fechaalta)
+summary(dtrain$Visa_fechaalta_2)
+
+# Hacemos un modelo sin la variable vieja
+modelo2 <- rpart(clase_binaria ~ . - Visa_fechaalta,
+                 data = dtrain,
+                 xval = 0,
+                 cp = -1,
+                 minsplit = 20,
+                 minbucket = 10,
+                 maxdepth = 5)
+
+print(modelo2$variable.importance)
+
+# Para calcular la ganancia hay que agregar la variable a test
+dtest[, Visa_fechaalta_null := ifelse(is.na(Visa_fechaalta), 
+                                   1,
+                                   0)] 
+
+# Para calcular la ganancia hay que agregar la variable a test
+dtest[, Visa_fechaalta_2 := ifelse(is.na(Visa_fechaalta), 
+                                   0,
+                                   Visa_fechaalta)] 
+
+calcular_ganancia(modelo2, dtest)
+###17533333
+
+
+
 
 ## Preguntas
 ## - ¿Desde el punto de vista de la importancia de variable, después que se 
@@ -176,21 +312,135 @@ experimento <- function() {
         set.seed(s)
         in_training <- caret::createDataPartition(dataset$clase_binaria, p = 0.70,
             list = FALSE)
-        train  <-  dataset[in_training, ]
-        test   <-  dataset[-in_training, ]
+        dtrain  <-  dataset[in_training, ]
+        dtest   <-  dataset[-in_training, ]
+        
+        
+        mean_Visa_fechaalta <- mean(dtrain$Visa_fechaalta, na.rm = T)
+        # Imputamos los nulos de nuestra variable con la media
+        dtrain[, Visa_fechaalta_3 := ifelse(is.na(Visa_fechaalta), 
+                                            mean_Visa_fechaalta,
+                                            Visa_fechaalta)] 
+        
+        dtest[, Visa_fechaalta_3 := ifelse(is.na(Visa_fechaalta), 
+                                           mean_Visa_fechaalta,
+                                           Visa_fechaalta)] 
+      
 
         r <- rpart(clase_binaria ~ .,
-                    data = train,
+                    data = dtrain,
                     xval = 0,
                     cp = -1,
                     minsplit = 20,
                     minbucket = 10,
                     maxdepth = 5)
 
-        gan <- c(gan, calcular_ganancia(r, test))
+        gan <- c(gan, calcular_ganancia(r, dtest))
     }
     mean(gan)
 }
+
+experimento()
+####20482667
+
+
+
+
+experimento <- function() {
+  gan <- c()
+  for (s in semillas) {
+    set.seed(s)
+    in_training <- caret::createDataPartition(dataset$clase_binaria, p = 0.70,
+                                              list = FALSE)
+    dtrain  <-  dataset[in_training, ]
+    dtest   <-  dataset[-in_training, ]
+    
+    
+    mean_Visa_fechaalta <- mean(dtrain$Visa_fechaalta, na.rm = T)
+    #creovariable para reportar nulos
+    dtrain[, Visa_fechaalta_null := ifelse(is.na(Visa_fechaalta), 
+                                        1,
+                                        0)] 
+    
+    dtest[, Visa_fechaalta_null := ifelse(is.na(Visa_fechaalta), 
+                                       1,
+                                       0)]     
+    
+    # Imputamos los nulos de nuestra variable con la media
+    dtrain[, Visa_fechaalta_3 := ifelse(is.na(Visa_fechaalta), 
+                                        mean_Visa_fechaalta,
+                                        Visa_fechaalta)] 
+    
+    dtest[, Visa_fechaalta_3 := ifelse(is.na(Visa_fechaalta), 
+                                       mean_Visa_fechaalta,
+                                       Visa_fechaalta)] 
+    
+    
+    r <- rpart(clase_binaria ~ .,
+               data = dtrain,
+               xval = 0,
+               cp = -1,
+               minsplit = 20,
+               minbucket = 10,
+               maxdepth = 5)
+    
+    gan <- c(gan, calcular_ganancia(r, dtest))
+  }
+  mean(gan)
+}
+
+experimento()
+####20682667
+
+
+
+
+experimento <- function() {
+  gan <- c()
+  for (s in semillas) {
+    set.seed(s)
+    in_training <- caret::createDataPartition(dataset$clase_binaria, p = 0.70,
+                                              list = FALSE)
+    dtrain  <-  dataset[in_training, ]
+    dtest   <-  dataset[-in_training, ]
+    
+    
+    mean_Visa_fechaalta <- mean(dtrain$Visa_fechaalta, na.rm = T)
+    #creovariable para reportar nulos
+    dtrain[, Visa_fechaalta_null := ifelse(is.na(Visa_fechaalta), 
+                                           1,
+                                           0)] 
+    
+    dtest[, Visa_fechaalta_null := ifelse(is.na(Visa_fechaalta), 
+                                          1,
+                                          0)]     
+    
+    # Imputamos los nulos de nuestra variable con la media
+    dtrain[, Visa_fechaalta_3 := ifelse(is.na(Visa_fechaalta), 
+                                        20000,
+                                        Visa_fechaalta)] 
+    
+    dtest[, Visa_fechaalta_3 := ifelse(is.na(Visa_fechaalta), 
+                                       20000,
+                                       Visa_fechaalta)] 
+    
+    
+    r <- rpart(clase_binaria ~ .,
+               data = dtrain,
+               xval = 0,
+               cp = -1,
+               minsplit = 20,
+               minbucket = 10,
+               maxdepth = 5)
+    
+    gan <- c(gan, calcular_ganancia(r, dtest))
+  }
+  mean(gan)
+}
+
+experimento()
+####21266667
+
 
 # Veamos la 
 ## Preguntas
@@ -263,7 +513,7 @@ print(modelo_cq_2)
 ## - Mirando los puntos de corte de los dos modelos ¿Existe una relación
 ##   matermática entre ellos?
 ## - ¿Es útil una transformación monótona en los árboles de decisión?
-
+###noo
 ## ---------------------------
 ## Step 7: Outliers - Una más y no jodemos más 
 ## ---------------------------
@@ -332,11 +582,20 @@ modelo5 <- rpart(formula,
 
 print(modelo5$variable.importance)
 
+
+##robar modelo sin la mejor variable, a ver que pasa. la mas influyente o el primer nodo
+
 ## ---------------------------
 ## Step 10: Embeddings (Caseros)
 ## ---------------------------
 
+
+###repasar PCA, t-sne, umar
+#sklearn, embeading, tranreduccion de dimensionalidad lineal.
+
 # Hagamos interactuar algunas variables para ver si conseguimos alguna mejor
+
+###multiplico 2 variables, puedo sumarlas, dividirlas, lo qeu quiera
 nuevas <- c()
 for (var1 in mis_variables_2) {
     for (var2 in mis_variables_2) {
@@ -373,7 +632,11 @@ print(modelo6$variable.importance)
 ## - Opt Bayesiana para el dataset que se incluya nuevas variables
 ## - Scorear en los datos de marzo y subir a kaggle el score.
 
+
 ####escuchar al cliente, experto, referente
 ####comprobar, validar la hipotesis
 ####combinar distintos tipos de tarjetas
 ####
+
+
+

@@ -103,9 +103,9 @@ ctrl <- setMBOControlTermination(ctrl, iters = 50L) #modificar mas mejor
 ctrl <- setMBOControlInfill(
   ctrl,
   crit = makeMBOInfillCritEI(),
-  opt = "focussearch",
+  opt = "focussearch"
   # sacar parámetro opt.focussearch.points en próximas ejecuciones
-  opt.focussearch.points = 20
+  #opt.focussearch.points = 20
 )
 
 
@@ -120,7 +120,7 @@ print(t1 - t0)
 
 print(run_md_ms)
 
-#Time difference of 32.54243 mins
+#Time difference of 34.42024 mins
 #Recommended parameters:
-#  maxdepth=22; minsplit=16; fracminbucket=0.727
+#  maxdepth=23; minsplit=11; fracminbucket=1.05
 #Objective: y = 19272000.000

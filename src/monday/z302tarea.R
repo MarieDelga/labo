@@ -99,7 +99,7 @@ obj_fun <- makeSingleObjectiveFunction(
 )
 
 ctrl <- makeMBOControl()
-ctrl <- setMBOControlTermination(ctrl, iters = 50L) #modificar mas mejor
+ctrl <- setMBOControlTermination(ctrl, iters = 200L) #modificar mas mejor
 ctrl <- setMBOControlInfill(
   ctrl,
   crit = makeMBOInfillCritEI(),
@@ -120,7 +120,7 @@ print(t1 - t0)
 
 print(run_md_ms)
 
-#Time difference of 32.54243 mins
-#Recommended parameters:
-#  maxdepth=22; minsplit=16; fracminbucket=0.727
-#Objective: y = 19272000.000
+#Time difference of  1.845049 hours
+#Recommended parameters: 
+# maxdepth=11; minsplit=157; fracminbucket=0.0035
+#Objective: y = 19701333.333
