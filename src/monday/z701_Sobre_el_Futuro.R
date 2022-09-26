@@ -13,6 +13,11 @@
 # vamos aprovechar (y recomendar que usted también lo haga) Enero para
 # experimentar contra Marzo.
 
+###datat drift son cambios a lo largo del tiempo, correlacion o covarianza sobre 2 variables
+#(se mueve la curva de distribucion)
+
+#las variables complicadas, se ranquean o vuelan
+
 rm(list = ls())
 gc(verbose = FALSE)
 
@@ -23,9 +28,9 @@ require("ggplot2")
 require("lightgbm")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("/home/aleb/dmeyf2022")
+setwd("C:\\Users\\Marie\\Documents\\MasterUBA\\DMEyF")
 # Poner sus semillas
-semillas <- c(17, 19, 23, 29, 31)
+semillas <- c(432557, 892597, 998197, 214733, 502321)
 
 # Cargamos los datasets y nos quedamos solo con 202101 y 202103
 dataset <- fread("./datasets/competencia2_2022.csv.gz")
@@ -68,7 +73,8 @@ length(unique(marzo$pred))
 
 ## Preguntas
 ## - ¿Qué diferencia observa con respecto a ?
-
+#antes tenia 40 hojas, ahora tengo un monton.
+#ahora tengo que buscar el punto de corte
 ## ---------------------------
 ## Step 4: En el leaderboard público.
 ## ---------------------------
@@ -98,7 +104,7 @@ sum((marzo$pred[-split] > 0.025) * ifelse(marzo$clase_ternaria[-split] == "BAJA+
 setorder(marzo, cols = -pred)
 
 # PROBAR MULTIPLES VALORES
-set.seed(semillas[3])
+set.seed(semillas[1])
 m <- 500
 f <- 2000
 t <- 12000
@@ -118,9 +124,10 @@ for (s in seq(f, t, m)) {
                         ))
 }
 # Graficamos
-ggplot(leaderboad, aes(x = envio, y = valor, color = board)) + geom_line()
-
+p<-ggplot(leaderboad, aes(x = envio, y = valor, color = board)) + geom_line()
+print(p)
 ## ACTIVE LEARNING: Juegue con los parámetros y busque si hay alguna información
 ## en el leaderboard público que le de una estrategia para elegir la cantidad
 ## adecuada para ganar maximizar la ganancia del privado.
 
+##maximo de los minimos local
