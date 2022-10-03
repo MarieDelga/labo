@@ -47,9 +47,9 @@ require("randomForest")
 require("lightgbm")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("/home/aleb/dmeyf2022")
+setwd("C:\\Users\\Marie\\Documents\\MasterUBA\\DMEyF")
 # Poner sus semillas
-semillas <- c(17, 19, 23, 29, 31)
+semillas <- c(432557, 892597, 998197, 214733, 502321)
 
 # Cargamos los datasets y nos quedamos solo con 202101 y 202103
 dataset <- fread("./datasets/competencia2_2022.csv.gz")
@@ -58,9 +58,9 @@ marzo <- dataset[foto_mes == 202103]
 
 # Importante que la clase sea factor
 enero[, clase_binaria1 := factor(ifelse(
-                            clase_ternaria == "BAJA+2",
-                                "evento",
-                                "noevento"
+                            clase_ternaria == "CONTINUA",
+                                "noevento",
+                                "evento"
                             ))]
 enero$clase_ternaria <- NULL
 in_training <- caret::createDataPartition(enero$clase_binaria1,
@@ -195,13 +195,24 @@ which(importancia3$variable == "pollito")
 ## Step 7: LightGBM
 ## ---------------------------
 
+
+
+
+
+
+
+
+
+
+
+
 # Cargamos todo para tener un código limpio
 dataset <- fread("./datasets/competencia2_2022.csv.gz")
 enero <- dataset[foto_mes == 202101]
 marzo <- dataset[foto_mes == 202103]
 rm(dataset)
 
-clase_binaria <- ifelse(enero$clase_ternaria == "BAJA+2", 1, 0)
+clase_binaria <- ifelse(enero$clase_ternaria == "CONTINA", 0, 1)
 enero$clase_ternaria <- NULL
 
 dtrain  <- lgb.Dataset(data = data.matrix(enero), label = clase_binaria)

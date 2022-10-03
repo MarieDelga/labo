@@ -20,9 +20,9 @@ require("ggplot2")
 require("lightgbm")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("/home/aleb/dmeyf2022")
+setwd("C:\\Users\\Marie\\Documents\\MasterUBA\\DMEyF")
 # Poner sus semillas
-semillas <- c(17, 19, 23, 29, 31)
+semillas <- c(432557, 892597, 998197, 214733, 502321)
 
 # Cargamos los datasets y nos quedamos solo con 202101 y 202103
 dataset <- fread("./datasets/competencia2_2022.csv.gz")
@@ -45,8 +45,8 @@ ganancia_lgbm  <- function(probs, datos) {
     gan <- data.table("pred" = probs,
                                                                  # truco para separar las clases
                     "gan" = ifelse(getinfo(datos, "label") == 1 & getinfo(datos, "weight") > 1, 78000, -2000))
-    setorder(gan, -pred)
-    gan[, gan_acum :=  cumsum(gan)]
+    setorder(gan, -pred) ##CAMBIAR
+    gan[, gan_acum :=  cumsum(gan)] 
     return(list("name" = "ganancia",
                     "value" = gan[, max(gan_acum)] / 0.2,
                     "higher_better" = TRUE))
@@ -85,7 +85,7 @@ model_lgbm_cv <- lgb.cv(
         # cuenta con una gran cantidad de funciones por out-of-the-box.
         metric = "custom",
 
-        # Tipo de boosting: Usamos el valor por defecto, pero cuenta con más tipos: gbdt, rf, dart, goss
+#probar diferentes (sobre todo para mas adelante)       # Tipo de boosting: Usamos el valor por defecto, pero cuenta con más tipos: gbdt, rf, dart, goss
         boosting = "gbdt",
 
         # Valores del primer árbol usando el valor de la media de las clases. Ahorra quizás, 3 árboles (?)
@@ -94,30 +94,35 @@ model_lgbm_cv <- lgb.cv(
         # Un parámetro más que importante! LightGBM bindea automaticamente las variables
         # Hace que las variables pesen menos en memoria
         # Hace más rápido en su ejecución
-        # Hace más robusto la predicción
+###     # Hace más robusto la predicción
         max_bin = 31,
 
         # Por default puede trabajar con missing. Pero siempre hay un alumno talibán.
         use_missing = TRUE,
 
-        # Variables de crecimiento del árbol.
+###        # Variables de crecimiento del árbol.
         max_depth = 12, # -1 = No limitar
-        min_data_in_leaf = 4000,
+        min_data_in_leaf = 4000, #como el min bcket
         feature_pre_filter = FALSE, #feature_pre_filter: Evita que LightGBM deje de lado variables que considera malas.
         num_leaves = 100,
 
         # Parámetros que fueron sacados de los rf porque lo que anda se mete:
         feature_fraction = 0.50, # Porcentaje de columnas que van a usarse en un árbol
+        #usar 1
+
         # feature_fraction_bynode si queremos que sea por nodo
         bagging_fraction = 1.0, # % de registros a considerar en cada árbol
+
+
         extra_tree = FALSE, # Los puntos de corte los elige al azar.
 
-        # Parámetros de las famosas regularizaciones!!
+###        # Parámetros de las famosas regularizaciones!!
+        #mas grande mas pesa la funcion de ajuste
         lambda_l1 = 0.0,
         lambda_l2 = 0.0,
         min_gain_to_split = 0.0,
 
-        # Otra variable más que importante! Cuanto aprende por cada nuevo árbol.
+###        # Otra variable más que importante! Cuanto aprende por cada nuevo árbol.
         learning_rate =  0.01,
 
         # Cuántos árboles vamos a generar

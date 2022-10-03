@@ -17,6 +17,7 @@
 #(se mueve la curva de distribucion)
 
 #las variables complicadas, se ranquean o vuelan
+dev.off()
 
 rm(list = ls())
 gc(verbose = FALSE)
@@ -105,7 +106,7 @@ setorder(marzo, cols = -pred)
 
 # PROBAR MULTIPLES VALORES
 set.seed(semillas[1])
-m <- 500
+m <- 100
 f <- 2000
 t <- 12000
 
@@ -124,6 +125,7 @@ for (s in seq(f, t, m)) {
                         ))
 }
 # Graficamos
+
 p<-ggplot(leaderboad, aes(x = envio, y = valor, color = board)) + geom_line()
 print(p)
 ## ACTIVE LEARNING: Juegue con los parámetros y busque si hay alguna información

@@ -18,9 +18,9 @@ require("rpart")
 require("ggplot2")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("/home/aleb/dmeyf2022")
+setwd("C:\\Users\\Marie\\Documents\\MasterUBA\\DMEyF")
 # Poner sus semillas
-semillas <- c(17, 19, 23, 29, 31)
+semillas <- c(432557, 892597, 998197, 214733, 502321)
 
 # Cargamos los datasets y nos quedamos solo con 202101 y 202103
 dataset <- fread("./datasets/competencia2_2022.csv.gz")
@@ -67,9 +67,9 @@ for (i in 1:100) {
   split <- caret::createDataPartition(marzo$clase_ternaria,
                      p = 0.70, list = FALSE)
   privado <- sum((marzo$pred[split] > 0.025) *
-        ifelse(marzo$clase_ternaria[split] == "BAJA+2", 78000, -2000)) / 0.7
+        ifelse(marzo$clase_ternaria[split] == "BAJA+2", 78000, -2000)) / 0.5
   publico <- sum((marzo$pred[-split] > 0.025) *
-        ifelse(marzo$clase_ternaria[-split] == "BAJA+2", 78000, -2000)) / 0.3
+        ifelse(marzo$clase_ternaria[-split] == "BAJA+2", 78000, -2000)) / 0.5
   leaderboad <- rbindlist(list(leaderboad,
                 data.table(privado = privado, publico = publico)))
 }
