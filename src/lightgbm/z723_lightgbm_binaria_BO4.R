@@ -327,6 +327,13 @@ setwd("C:\\Users\\Marie\\Documents\\MasterUBA\\DMEyF")
 #cargo el dataset donde voy a entrenar el modelo
 dataset  <- fread( PARAM$input$dataset, stringsAsFactors= TRUE)
 
+print(dim(dataset))
+
+#ayudo trabajando con menor datos
+dataset <- dataset[dataset$foto_mes %in% c( "202009", "202010", "202011", "202012", "202101", "202102", "202103", "202104", "202105"), ]
+
+print(dim(dataset))
+
 setorderv( dataset, c("numero_de_cliente","foto_mes") ) #ordeno
 
 #---------------------------------------------------
@@ -404,9 +411,32 @@ if( PARAM$lag2 )
 #--------------------------------------
 #agrego las tendencias
 
-#ordeno el dataset por <numero_de_cliente, foto_mes> para poder hacer lags
-#  es MUY  importante esta linea
-setorder( dataset, numero_de_cliente, foto_mes )
+if( PARAM$Tendencias )
+{
+  TendenciaYmuchomas( dataset, 
+                      cols= cols_lagueables,
+                      ventana=   3,      # 6 meses de historia
+                      tendencia= TRUE,
+                      minimo=    TRUE,
+                      maximo=    TRUE,
+                      promedio=  TRUE,
+                      ratioavg=  TRUE,
+                      ratiomax=  TRUE  )
+}
+
+
+if( PARAM$Tendencias )
+{
+  TendenciaYmuchomas( dataset, 
+                      cols= cols_lagueables,
+                      ventana=   3,      # 6 meses de historia
+                      tendencia= TRUE,
+                      minimo=    TRUE,
+                      maximo=    TRUE,
+                      promedio=  TRUE,
+                      ratioavg=  FALSE,
+                      ratiomax=  FALSE  )
+}
 
 if( PARAM$Tendencias )
 {
@@ -422,12 +452,13 @@ if( PARAM$Tendencias )
 }
 
 
+print(dim(dataset))
 
-
-
-
-
-
+#grabo el dataset
+fwrite( dataset,
+        "dataset_fe.csv.gz",
+        logical01= TRUE,
+        sep= "," )
 
 #paso la clase a binaria que tome valores {0,1}  enteros
 dataset[ foto_mes %in% PARAM$input$training, clase01 := ifelse( clase_ternaria=="CONTINUA", 0L, 1L) ]
