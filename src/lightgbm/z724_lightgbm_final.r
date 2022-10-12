@@ -103,7 +103,7 @@ dapply  <- dataset[ foto_mes== PARAM$input$future ]
 
 #aplico el modelo a los datos nuevos
 prediccion  <- predict( modelo, 
-                        data.matrix( dapply[, campos_buenos, with=FALSE ])                                 )
+                        data.matrix( dapply[, campos_buenos, with=FALSE ])                        )
 
 #genero la tabla de entrega
 tb_entrega  <-  dapply[ , list( numero_de_cliente, foto_mes ) ]
