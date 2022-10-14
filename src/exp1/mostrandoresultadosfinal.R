@@ -5,6 +5,8 @@
 
 # son varios archivos, subirlos INTELIGENTEMENTE a Kaggle
 
+#PERDON POR LO DESPROLIJO
+
 #limpio la memoria
 rm( list=ls() )  #remove all objects
 gc()             #garbage collection
@@ -95,7 +97,7 @@ ganancia <- function(probabilidades, clase) {
 }
 
 resultados_nofe <- c()
-n <- 10
+n <- 100
 
 
 set.seed(7)
@@ -117,7 +119,7 @@ for (i in 1:n) {
                                      seed=               i
                         )
   )
-
+  
   
   #aplico el modelo a los datos nuevos
   prediccion  <- predict( modelo, 
@@ -135,7 +137,7 @@ for (i in 1:n) {
   
   tb_entrega[  , Predicted := 0L ]
   tb_entrega[ 1:PARAM$finalmodel$envios, Predicted := 1L ]
-
+  
   
   gan <- ganancia(tb_entrega$Predicted, tb_entrega$clase01 ) 
   
@@ -145,6 +147,12 @@ print(Sys.time() - t0)
 
 ggplot() + aes(resultados_nofe) + geom_density()
 
+tb_importancia  <-  as.data.table( lgb.importance(modelo) ) 
+archivo_importancia  <- "impo.txt"
+
+fwrite( tb_importancia, 
+        file= archivo_importancia, 
+        sep= "\t" )
 
 
 #ahora repetimos para el modelo con fe
@@ -168,13 +176,14 @@ PARAM$finalmodel$envios <- 9138
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
-setwd("~/buckets/b1/")   #Establezco el Working Directory
+
 
 dataset_input  <- paste0( "./exp/", PARAM$exp_input, "/dataset.csv.gz" )
 dataset  <- fread( dataset_input )
 
 #dataset <- fread("./datasets/exp_FE9250_dataset.csv.gz", stringsAsFactors= TRUE)
 
+setwd( paste0("./exp/", PARAM$experimento, "/" ) )   #Establezco el Working Directory DEL EXPERIMENTO
 
 
 #--------------------------------------
@@ -190,10 +199,17 @@ dataset[ , clase01 := ifelse( clase_ternaria=="CONTINUA", 0L, 1L) ]
 dataset[ , train  := 0L ]
 dataset[ foto_mes %in% PARAM$input$training, train  := 1L ]
 
+#--------------------------------------
+
+#los campos que se van a utilizar
+campos_buenos  <- setdiff( colnames(dataset), c("clase_ternaria","clase01","numero_de_cliente" ) )
+
 #dejo los datos en el formato que necesita LightGBM
 dtrain  <- lgb.Dataset( data= data.matrix(  dataset[ train==1L, campos_buenos, with=FALSE]),
                         label= dataset[ train==1L, clase01] )
 
+#aplico el modelo a los datos sin clase
+dapply  <- dataset[ foto_mes== PARAM$input$future ]
 
 
 #--------------------------------------
@@ -201,7 +217,7 @@ dtrain  <- lgb.Dataset( data= data.matrix(  dataset[ train==1L, campos_buenos, w
 
 
 resultados_confe <- c()
-n <- 10
+n <- 100
 
 
 set.seed(7)
@@ -250,20 +266,39 @@ for (i in 1:n) {
 }
 print(Sys.time() - t0)
 
+
+
+
 ggplot() + aes(resultados_confe) + geom_density() 
 
+confusionMatrix(as.factor(tb_entrega$clase01), as.factor(tb_entrega$Predicted))
+
+
+
+tb_importancia  <-  as.data.table( lgb.importance(modelo) ) 
+archivo_importancia  <- "impo2.txt"
+
+fwrite( tb_importancia, 
+        file= archivo_importancia, 
+        sep= "\t" )
+
+
 confe <- data.frame(
-            gan = resultados_confe,
-            tipe= "confe")
+  gan = resultados_confe,
+  type= "confe")
 
 sinfe <- data.frame(
   gan = resultados_nofe,
-  tipe= "sinfe")
+  type= "sinfe")
 
 final =rbind(confe, sinfe)
 
-p<-ggplot(final, aes(x=gan , color=tipe)) +
+p<-ggplot(final, aes(x=gan , color=type)) +
   geom_density()
 
 p
 
+library(caret)
+library(InformationValue)
+library(ISLR)
+confusionMatrix(as.factor(tb_entrega$clase01), as.factor(tb_entrega$Predicted))
