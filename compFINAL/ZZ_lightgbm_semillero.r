@@ -14,6 +14,7 @@ require("data.table")
 require("lightgbm")
 require("primes")
 
+t0 <- Sys.time()
 #Parametros del script
 PARAM <- list()
 PARAM$experimento <- "ZZFINAL1semillero" #ZZ9410_semillerio"
@@ -178,9 +179,9 @@ for( ksemilla in ksemillas[PARAM$indice_inicio_semilla:PARAM$indice_fin_semilla]
   )
   
   #genero los archivos para Kaggle
-  cortes  <- seq( from=  11000,
-                  to=    11000,
-                  by=        0 )
+  cortes  <- seq( from=  7000,
+                  to=   20000,
+                  by=     500 )
   
   setorder( tb_prediccion, -prob )
   setorder(tb_prediccion_rank, prediccion) # Esto es un ranking, entonces de menor a mayor
@@ -213,3 +214,9 @@ for( ksemilla in ksemillas[PARAM$indice_inicio_semilla:PARAM$indice_fin_semilla]
   rm( dtrain )
   gc()
 }
+
+time<-list(Sys.time() - t0)
+
+fwrite( time, 
+        file= "time.csv", 
+        sep= "\t" )

@@ -13,6 +13,7 @@ require("data.table")
 
 require("lightgbm")
 
+t0 <- Sys.time()
 #Parametros del script
 PARAM  <- list()
 PARAM$experimento  <- "ZZFINAL1" #"ZZ9420"
@@ -188,4 +189,10 @@ for( i in  1:PARAM$modelos )
   rm( dtrain )
   gc()
 }
+
+time<-list(Sys.time() - t0)
+
+fwrite( time, 
+        file= "time.csv", 
+        sep= "\t" )
 

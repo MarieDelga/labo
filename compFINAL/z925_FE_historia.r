@@ -8,6 +8,7 @@
 rm( list=ls() )  #remove all objects
 gc()             #garbage collection
 
+
 require("data.table")
 require("Rcpp")
 
@@ -16,7 +17,7 @@ require("randomForest")  #solo se usa para imputar nulos
 
 require("lightgbm")
 
-
+t0 <- Sys.time()
 #Parametros del script
 PARAM  <- list()
 PARAM$experimento <- "FEFINAL1" #"FE9250"
@@ -493,3 +494,9 @@ fwrite( dataset,
         "dataset.csv.gz",
         logical01= TRUE,
         sep= "," )
+
+time<-list(Sys.time() - t0)
+
+fwrite( time, 
+        file= "time.csv", 
+        sep= "\t" )

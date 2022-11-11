@@ -11,7 +11,7 @@ gc()             #garbage collection
 require("data.table")
 
 
-
+t0 <- Sys.time()
 #Parametros del script
 PARAM  <- list()
 PARAM$experimento  <- "DRFINAL1" #DR9141"
@@ -287,3 +287,9 @@ PARAM$metodo,
 fwrite( dataset,
         file="dataset.csv.gz",
         sep= "," )
+
+time<-list(Sys.time() - t0)
+
+fwrite( time, 
+        file= "time.csv", 
+        sep= "\t" )

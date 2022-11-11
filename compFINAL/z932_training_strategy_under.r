@@ -12,7 +12,7 @@ gc()             #garbage collection
 require("data.table")
 
 
-
+t0 <- Sys.time()
 #Parametros del script
 PARAM  <- list()
 PARAM$experimento <- "TSFINAL1" # "TS9320"
@@ -114,4 +114,11 @@ fwrite( dataset[ fold_train + fold_validate + fold_test >= 1 , ],
         file= "dataset_training.csv.gz",
         logical01= TRUE,
         sep= "," )
+
+
+time<-list(Sys.time() - t0)
+
+fwrite( time, 
+        file= "time.csv", 
+        sep= "\t" )
 
