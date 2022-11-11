@@ -101,63 +101,63 @@ AgregarVariables  <- function( dataset )
 
   #Aqui debe usted agregar sus propias nuevas variables
   
-  #agregao mis variables
+  #Aqui debe usted agregar sus propias nuevas variables 
   
-  #agregamos variables (solo relaciones por linea)
+  dataset[ , zm_mrentabilidad_annual_pondmes := mrentabilidad_annual / ifelse(cliente_antiguedad>12, 12, cliente_antiguedad) ] 
+  dataset[ , zm_mrentabilidad_sobre_annual_pondmes := mrentabilidad / ifelse(zm_mrentabilidad_annual_pondmes>0, zm_mrentabilidad_annual_pondmes,1) ] 
   
-  dataset$mrentabilidad_annual_pondmes = dataset$mrentabilidad_annual / ifelse(dataset$cliente_antiguedad>12, 12,dataset$cliente_antiguedad)
-  dataset$mrentabilidad_sobre_annual_pondmes = dataset$mrentabilidad / ifelse(dataset$mrentabilidad_annual_pondmes>0, dataset$mrentabilidad_annual_pondmes,1)
+  dataset[ , zm_mrentabilidad_total := mcomisiones + mactivos_margen + mpasivos_margen ] 
+  dataset[ , zm_mrentabilidad_total_pondmes := zm_mrentabilidad_total / cliente_antiguedad ] 
+  dataset[ , zm_mrentabilidad_sobre_total_pondmes := mrentabilidad / ifelse(zm_mrentabilidad_total_pondmes>0, zm_mrentabilidad_total_pondmes,1) ] 
   
-  dataset$mrentabilidad_total = dataset$mcomisiones + dataset$mactivos_margen + dataset$mpasivos_margen
-  dataset$mrentabilidad_total_pondmes = dataset$mrentabilidad_total / dataset$cliente_antiguedad
-  dataset$mrentabilidad_sobre_total_pondmes = dataset$mrentabilidad / ifelse(dataset$mrentabilidad_total_pondmes>0, dataset$mrentabilidad_total_pondmes,1)
+  #las sobre estan muy correlacionadas 
   
-  #las sobre estan muy correlacionadas
+  dataset[ , zm_mcuenta_corriente_total := mcuenta_corriente + mcuenta_corriente_adicional ] 
+  dataset[ , zm_mcuenta_corriente_difadic := mcuenta_corriente_adicional - mcuenta_corriente ] #cuanto mas grande, no usa la premium, se va a ir 
+  dataset[ , zm_mcaja_ahorro_total := mcaja_ahorro + mcaja_ahorro_adicional + mcaja_ahorro_dolares ] 
+  dataset[ , zm_mcaja_ahorro_difadic := mcaja_ahorro_adicional - mcaja_ahorro ] #cuanto mas grande, no usa la premium, se va a ir 
+  #total ya esta mcuentas_saldo 
   
-  dataset$mcuenta_corriente_total = dataset$mcuenta_corriente + dataset$mcuenta_corriente_adicional
-  dataset$mcuenta_corriente_difadic = dataset$mcuenta_corriente_adicional - dataset$mcuenta_corriente #cuanto mas grande, no usa la premium, se va a ir
-  dataset$mcaja_ahorro_total = dataset$mcaja_ahorro + dataset$mcaja_ahorro_adicional + dataset$mcaja_ahorro_dolares
-  dataset$mcaja_ahorro_difadic = dataset$mcaja_ahorro_adicional - dataset$mcaja_ahorro #cuanto mas grande, no usa la premium, se va a ir
-  #total ya esta mcuentas_saldo
+  dataset[ , zm_mautoservicio_prom_transacciones := mautoservicio / ifelse(ctarjeta_debito_transacciones>0, ctarjeta_debito_transacciones,1) ] 
+  dataset[ , zm_mtarjeta_visa_consumo_prom_transacciones := mtarjeta_visa_consumo / ifelse(ctarjeta_visa_transacciones>0, ctarjeta_visa_transacciones,1) ] 
+  dataset[ , zm_mtarjeta_master_consumo_prom_transacciones := mtarjeta_master_consumo / ifelse(ctarjeta_master_transacciones>0, ctarjeta_master_transacciones,1) ] 
   
-  dataset$mautoservicio_prom_transacciones = dataset$mautoservicio / ifelse(dataset$ctarjeta_debito_transacciones>0, dataset$ctarjeta_debito_transacciones,1)
-  dataset$mtarjeta_visa_consumo_prom_transacciones = dataset$mtarjeta_visa_consumo / ifelse(dataset$ctarjeta_visa_transacciones>0, dataset$ctarjeta_visa_transacciones,1)
-  dataset$mtarjeta_master_consumo_prom_transacciones = dataset$mtarjeta_master_consumo / ifelse(dataset$ctarjeta_master_transacciones>0, dataset$ctarjeta_master_transacciones,1)
+  dataset[ , zm_mprestamos_personales_prom := mprestamos_personales / ifelse(cprestamos_personales>0, cprestamos_personales,1) ] 
+  dataset[ , zm_mprestamos_prendarioss_prom := mprestamos_prendarios / ifelse(cprestamos_prendarios>0, cprestamos_personales,1) ] 
+  dataset[ , zm_mprestamos_hipotecarios_prom := mprestamos_hipotecarios / ifelse(cprestamos_hipotecarios>0, cprestamos_hipotecarios,1) ] 
+  dataset[ , zm_mprestamos_total:=mprestamos_personales + mprestamos_prendarios + mprestamos_hipotecarios ] 
+  dataset[ , zm_mprestamos_total_prom := zm_mprestamos_personales_prom + zm_mprestamos_prendarioss_prom + zm_mprestamos_hipotecarios_prom ] 
+  dataset[ , zm_mplazo_fijo_total:= mplazo_fijo_dolares + mplazo_fijo_pesos ] 
+  dataset[ , zm_mplazo_fijo_prom := zm_mplazo_fijo_total / ifelse(cplazo_fijo>0, cplazo_fijo,1) ] 
+  dataset[ , zm_minversion1_total := minversion1_pesos + minversion1_dolares ] 
+  dataset[ , zm_minversion1_prom := zm_minversion1_total / ifelse(cinversion1>0, cinversion1,1) ] 
+  dataset[ , zm_minversion2_prom := minversion2 / ifelse(cinversion2>0, cinversion2,1) ] 
+  dataset[ , zm_minversion_total := zm_minversion1_total + minversion2 ] 
   
-  dataset$mprestamos_personales_prom = dataset$mprestamos_personales / ifelse(dataset$cprestamos_personales>0, dataset$cprestamos_personales,1)
-  dataset$mprestamos_prendarioss_prom = dataset$mprestamos_prendarios / ifelse(dataset$cprestamos_prendarios>0, dataset$cprestamos_personales,1)
-  dataset$mprestamos_hipotecarios_prom = dataset$mprestamos_hipotecarios / ifelse(dataset$cprestamos_hipotecarios>0, dataset$cprestamos_hipotecarios,1)
-  dataset$mprestamos_total=dataset$mprestamos_personales + dataset$mprestamos_prendarios + dataset$mprestamos_hipotecarios
-  dataset$mprestamos_total_prom = dataset$mprestamos_personales_prom + dataset$mprestamos_prendarioss_prom + dataset$mprestamos_hipotecarios_prom
+  dataset[ , zm_mpayroll_prom := mpayroll / ifelse(cpayroll_trx>0, cpayroll_trx,1) ] 
+  dataset[ , zm_mpayroll2_prom := mpayroll2 / ifelse(cpayroll2_trx>0, cpayroll2_trx,1) ] 
   
-  dataset$mplazo_fijo_total= dataset$mplazo_fijo_dolares + dataset$mplazo_fijo_pesos
-  dataset$mplazo_fijo_prom = dataset$mplazo_fijo_total / ifelse(dataset$cplazo_fijo>0, dataset$cplazo_fijo,1)
-  dataset$minversion1_total = dataset$minversion1_pesos + dataset$minversion1_dolares
-  dataset$minversion1_prom = dataset$minversion1_total / ifelse(dataset$cinversion1>0, dataset$cinversion1,1)
-  dataset$minversion2_prom =dataset$minversion2 / ifelse(dataset$cinversion2>0, dataset$cinversion2,1)
-  dataset$minversion_total = dataset$minversion1_total + dataset$minversion2
+  dataset[ , zm_mcuenta_debitos_automaticos_prom := mcuenta_debitos_automaticos / ifelse(ccuenta_debitos_automaticos>0, ccuenta_debitos_automaticos,1 ) ] 
+  dataset[ , zm_mtarjeta_visa_debitos_automaticos_prom := mttarjeta_visa_debitos_automaticos / ifelse(ctarjeta_visa_debitos_automaticos>0, ctarjeta_visa_debitos_automaticos,1 ) ] 
+  dataset[ , zm_mttarjeta_master_debitos_automaticos_prom := mttarjeta_master_debitos_automaticos / ifelse(ctarjeta_master_debitos_automaticos>0, ctarjeta_master_debitos_automaticos,1 ) ] 
   
-  dataset$mpayroll_prom = dataset$mpayroll / ifelse(dataset$cpayroll_trx>0, dataset$cpayroll_trx,1)
-  dataset$mpayroll2_prom = dataset$mpayroll2 / ifelse(dataset$cpayroll2_trx>0, dataset$cpayroll2_trx,1)
+  dataset[ , zm_mpagodeservicios_prom := mpagodeservicios / ifelse(cpagodeservicios>0, cpagodeservicios,1 ) ] 
+  dataset[ , zm_mpagomiscuentas_prom := mpagomiscuentas / ifelse(cpagomiscuentas>0, cpagomiscuentas,1 ) ] 
   
-  dataset$mcuenta_debitos_automaticos_prom = dataset$mcuenta_debitos_automaticos / ifelse(dataset$ccuenta_debitos_automaticos>0, dataset$ccuenta_debitos_automaticos,1 )
-  dataset$mtarjeta_visa_debitos_automaticos_prom = dataset$mtarjeta_visa_debitos_automaticos / ifelse(dataset$ctarjeta_visa_debitos_automaticos>0, dataset$ctarjeta_visa_debitos_automaticos,1 )
-  dataset$mttarjeta_master_debitos_automaticos_prom = dataset$mttarjeta_master_debitos_automaticos / ifelse(dataset$ctarjeta_master_debitos_automaticos>0, dataset$ctarjeta_master_debitos_automaticos,1 )
+  dataset[ , zm_mcajeros_propios_descuentos_prom := mcajeros_propios_descuentos / ifelse(ccajeros_propios_descuentos>0, ccajeros_propios_descuentos,1 ) ] 
+  dataset[ , zm_mtarjeta_visa_descuentos_prom := mtarjeta_visa_descuentos / ifelse(ctarjeta_visa_descuentos>0, ctarjeta_visa_descuentos,1 ) ] 
+  dataset[ , zm_mtarjeta_master_descuentos_prom := mtarjeta_master_descuentos / ifelse(ctarjeta_master_descuentos>0, ctarjeta_master_descuentos,1 ) ] 
   
-  dataset$mpagodeservicios_prom = dataset$mpagodeservicios / ifelse(dataset$cpagodeservicios>0, dataset$cpagodeservicios,1 )
-  dataset$mpagomiscuentas_prom = dataset$mpagomiscuentas / ifelse(dataset$cpagomiscuentas>0, dataset$cpagomiscuentas,1 )
+  dataset[ , zm_mcomisiones_mantenimiento_prom := mcomisiones_mantenimiento / ifelse(ccomisiones_mantenimiento>0, ccomisiones_mantenimiento,1 ) ] 
+  dataset[ , zm_mcomisiones_otras_prom := mcomisiones_otras / ifelse(ccomisiones_otras>0, ccomisiones_otras,1 ) ] 
+  dataset[ , zm_mcomisiones_difotras := mcomisiones_otras - mcomisiones_mantenimiento ]  #cuanto mas grande, no usa la premium, se va a ir 
+  dataset[ , zm_mcomisiones_difotras_prom := zm_mcomisiones_otras_prom - zm_mcomisiones_mantenimiento_prom ] #cuanto mas grande, no usa la premium, se va a ir 
   
-  dataset$mcajeros_propios_descuentos_prom = dataset$mcajeros_propios_descuentos / ifelse(dataset$ccajeros_propios_descuentos>0, dataset$ccajeros_propios_descuentos,1 )
-  dataset$mtarjeta_visa_descuentos_prom = dataset$mtarjeta_visa_descuentos / ifelse(dataset$ctarjeta_visa_descuentos>0, dataset$ctarjeta_visa_descuentos,1 )
-  dataset$mtarjeta_master_descuentos_prom = dataset$mtarjeta_master_descuentos / ifelse(dataset$ctarjeta_master_descuentos>0, dataset$ctarjeta_master_descuentos,1 )
+  dataset[ , zm_mforex_sell_prom := mforex_sell / ifelse(cforex_sell>0, cforex_sell,1 ) ] 
+  dataset[ , zm_mforex_buy_prom := mforex_buy / ifelse(cforex_buy>0, cforex_buy,1 ) ] 
   
-  dataset$mcomisiones_mantenimiento_prom = dataset$mcomisiones_mantenimiento / ifelse(dataset$ccomisiones_mantenimiento>0, dataset$ccomisiones_mantenimiento,1 )
-  dataset$mcomisiones_otras_prom = dataset$mcomisiones_otras / ifelse(dataset$ccomisiones_otras>0, dataset$ccomisiones_otras,1 )
-  dataset$mcomisiones_difotras = dataset$mcomisiones_otras - dataset$mcomisiones_mantenimiento #cuanto mas grande, no usa la premium, se va a ir
-  dataset$mcomisiones_difotras_prom = dataset$mcomisiones_otras_prom - dataset$mcomisiones_mantenimiento_prom #cuanto mas grande, no usa la premium, se va a ir
-  
-  dataset$mforex_sell_prom = dataset$mforex_sell / ifelse(dataset$cforex_sell>0, dataset$cforex_sell,1 )
-  dataset$mforex_buy_prom = dataset$mforex_buy / ifelse(dataset$cforex_buy>0, dataset$cforex_buy,1 )
+  dataset[ , foto_mes_mes := foto_mes %% 100 ]   #En R  %% es el módulo 
+  dataset[ , foto_mes_anio :=   floor( foto_mes/100 ) ]  # floor() es quedarse con la parte entera 
 
   #valvula de seguridad para evitar valores infinitos
   #paso los infinitos a NULOS
