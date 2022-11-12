@@ -83,19 +83,7 @@ for( ksemilla in ksemillas[PARAM$indice_inicio_semilla:PARAM$indice_fin_semilla]
 {
   
   # optimización: si los archivos ya existen, puedo hacer skip de esta semilla
-  nom_submit <- paste0(
-    PARAM$experimento,
-    "_",
-    sprintf("%d", ksemilla),
-    ".csv"
-  )
-  
-  nom_submit_rank <- paste0(
-    PARAM$experimento,
-    "_",
-    sprintf("%d", ksemilla),
-    "_rank.csv"
-  )
+
   
   nom_resultados <- paste0(
     PARAM$experimento,
@@ -193,6 +181,24 @@ for( ksemilla in ksemillas[PARAM$indice_inicio_semilla:PARAM$indice_fin_semilla]
     
     tb_prediccion_rank[, Predicted := 0L]
     tb_prediccion_rank[1:corte, Predicted := 1L]
+    
+    nom_submit <- paste0(
+      PARAM$experimento,
+      "_",
+      sprintf("%d", ksemilla),
+      "_",
+      corte,
+      ".csv"
+    )
+    
+    nom_submit_rank <- paste0(
+      PARAM$experimento,
+      "_",
+      sprintf("%d", ksemilla),
+      "_",
+      corte,
+      "_rank.csv"
+    )
     
     # Guardo el submit individual
     fwrite(  tb_prediccion[ , list( numero_de_cliente, Predicted ) ],

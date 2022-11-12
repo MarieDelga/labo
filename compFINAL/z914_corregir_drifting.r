@@ -22,6 +22,8 @@ PARAM$exp_input  <- "CAFINAL1" #"CA9060"
 PARAM$metodo  <- "ninguno"
 # FIN Parametros del script
 
+PARAM$FEpropio = TRUE
+
 
 #------------------------------------------------------------------------------
 #Esta es la parte que los alumnos deben desplegar todo su ingenio
@@ -101,7 +103,8 @@ AgregarVariables  <- function( dataset )
 
   #Aqui debe usted agregar sus propias nuevas variables
   
-  #Aqui debe usted agregar sus propias nuevas variables 
+  if( PARAM$FEpropio )
+  {
   
   dataset[ , zm_mrentabilidad_annual_pondmes := mrentabilidad_annual / ifelse(cliente_antiguedad>12, 12, cliente_antiguedad) ] 
   dataset[ , zm_mrentabilidad_sobre_annual_pondmes := mrentabilidad / ifelse(zm_mrentabilidad_annual_pondmes>0, zm_mrentabilidad_annual_pondmes,1) ] 
@@ -158,6 +161,7 @@ AgregarVariables  <- function( dataset )
   
   dataset[ , foto_mes_mes := foto_mes %% 100 ]   #En R  %% es el módulo 
   dataset[ , foto_mes_anio :=   floor( foto_mes/100 ) ]  # floor() es quedarse con la parte entera 
+  }
 
   #valvula de seguridad para evitar valores infinitos
   #paso los infinitos a NULOS
