@@ -196,8 +196,8 @@ EstimarGanancia_lightgbm  <- function( x )
   xx  <- c( ds, copy(param_completo) )
 
   #quito los parametros reales
-  xx$min_data_in_leaf <- NULL
-  xx$num_leaves <- NULL
+  xx$min_data_in_leaf <- NULL ##
+  xx$num_leaves <- NULL ##
 
   xx$early_stopping_rounds  <- NULL
   xx$num_iterations  <- modelo_train$best_iter

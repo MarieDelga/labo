@@ -18,12 +18,12 @@ require("lightgbm")
 require("DiceKriging")
 require("mlrMBO")
 
-
+t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "HT9420"
+PARAM$experimento <- "HTFINAL_MODEL1" #"HT9420"
 
-PARAM$exp_input  <- "TS9320"
+PARAM$exp_input  <- "TSFINAL_MODEL1" #"TS9320"
 # FIN Parametros del script
 
 
@@ -35,7 +35,7 @@ options(error = function() {
 })
 #------------------------------------------------------------------------------
 
-ksemilla  <- 102191
+ksemilla  <- 432557
 
 kcrossvalidation_folds  <- 5  #En caso que se haga cross validation, se usa esta cantidad de folds
 
@@ -81,7 +81,7 @@ hs <- makeParamSet(
 
 
 #si usted es ambicioso, y tiene paciencia, podria subir este valor a 100
-kBO_iteraciones  <- 50  #iteraciones de la Optimizacion Bayesiana
+kBO_iteraciones  <- 100  #iteraciones de la Optimizacion Bayesiana
 
 #------------------------------------------------------------------------------
 #graba a un archivo los componentes de lista
@@ -458,3 +458,8 @@ if( !file.exists( "bayesiana.RDATA" ) ) {
   run  <- mboContinue( "bayesiana.RDATA" )   #retomo en caso que ya exista
 }
 
+time<-list(Sys.time() - t0)
+
+fwrite( time, 
+        file= "time.csv", 
+        sep= "," )

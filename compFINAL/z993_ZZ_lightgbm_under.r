@@ -57,6 +57,14 @@ dataset  <- fread( arch_dataset )
 arch_future  <- paste0( base_dir, "exp/", TS, "/dataset_future.csv.gz" )
 dfuture <- fread( arch_future )
 
+#MAR leo el dataset validate donde voy a testear el modelo final
+arch_validate  <- paste0( base_dir, "exp/", TS, "/dataset_training.csv.gz" )
+dataset_training <- fread( arch_validate )
+dvalidate  <- lgb.Dataset( data=  data.matrix( dataset_training[ fold_validate==1, campos_buenos, with=FALSE] ),
+                           label= dataset_training[ fold_validate==1, clase01 ],
+                           free_raw_data= FALSE  )
+
+
 
 #defino la clase binaria
 dataset[ , clase01 := ifelse( clase_completa %in% c("BAJA+1","BAJA+2", "BAJA+3"), 1, 0 )  ]
@@ -137,18 +145,37 @@ for( i in  1:PARAM$modelos )
   prediccion  <- predict( modelo_final,
                           data.matrix( dfuture[ , campos_buenos, with=FALSE ] ) )
 
+  
   tb_prediccion  <- dfuture[  , list( numero_de_cliente, foto_mes ) ]
   tb_prediccion[ , prob := prediccion ]
-
-
+  
+  
   nom_pred  <- paste0( "pred_",
                        sprintf( "%02d", i ),
                        "_",
                        sprintf( "%03d", iteracion_bayesiana),
                        ".csv"  )
-
+  
   fwrite( tb_prediccion,
           file= nom_pred,
+          sep= "\t" )
+  
+  #MAR genero la prediccion para validacion, Scoring
+  prediccion_validate  <- predict( modelo_final,
+                          data.matrix( dvalidate[ , campos_buenos, with=FALSE ] ) )
+  
+  tb_prediccion_validate   <- dvalidate[  , list( numero_de_cliente, foto_mes, clase_completa ) ]
+  tb_prediccion_validate [ , prob := prediccion_validate  ]
+  
+  
+  nom_pred_validate   <- paste0( "pred_validate_",
+                       sprintf( "%02d", i ),
+                       "_",
+                       sprintf( "%03d", iteracion_bayesiana),
+                       ".csv"  )
+  
+  fwrite( tb_prediccion_validate ,
+          file= nom_pred_validate ,
           sep= "\t" )
 
 
@@ -194,5 +221,5 @@ time<-list(Sys.time() - t0)
 
 fwrite( time, 
         file= "time.csv", 
-        sep= "\t" )
+        sep= "," )
 
