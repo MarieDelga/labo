@@ -14,9 +14,9 @@ require("data.table")
 t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento  <- "DRFINAL_MODEL1" # "DR9141"
+PARAM$experimento  <- "DRFINAL_MODEL0" # "DR9141"
 
-PARAM$exp_input  <- "CAFINAL_MODEL1" #"CA9060"
+PARAM$exp_input  <- "CAFINAL_MODEL0" #"CA9060"
 
 #valores posibles  "ninguno" "rank_simple" , "rank_cero_fijo" , "deflacion"
 PARAM$metodo  <- "rank_cero_fijo"

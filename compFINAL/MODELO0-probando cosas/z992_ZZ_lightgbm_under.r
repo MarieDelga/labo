@@ -15,8 +15,8 @@ require("lightgbm")
 t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento  <- "ZZFINAL_MODEL1" #"ZZ9420"
-PARAM$exp_input  <-  "HTFINAL_MODEL1" # "HT9420"
+PARAM$experimento  <- "ZZFINAL_MODEL0" #"ZZ9420"
+PARAM$exp_input  <-  "HTFINAL_MODEL0.0_original" # "HT9420"
 
 PARAM$modelos  <- 2
 # FIN Parametros del script

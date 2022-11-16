@@ -15,25 +15,23 @@ require("data.table")
 t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "TSFINAL_MODEL1" # "TS9320"
+PARAM$experimento <- "TSFINAL_MODEL0" # "TS9320"
 
-PARAM$exp_input  <- "FEFINAL_MODEL1" # "FE9250"
+PARAM$exp_input  <- "FEFINAL_MODEL0" # "FE9250"
 
 PARAM$future       <- c( 202109 )
 
-PARAM$final_train  <- c( 201901, 201902, 201903, 201904, 201905, 201906, 
-                            201909, 201910,  201911, 201912, 
-                         202001, 202002, 202003, 202004, 202005, 
-                         202007, 202008,     202011, 202012, 
-                         202101, 202102, 202103, 202104, 202105, 202106)
+PARAM$final_train  <- c(   
+                            201909, 201910, 
+                         202008     )
 
-PARAM$train$training     <- c( 201901, 201902, 201903, 201904, 201905, 201906, 
-                                 201909,  201910,  201911, 201912, 
-                               202001, 202002, 202003, 202004, 202005,
-                               202007,202008,      202011, 202012, 
-                               202101, 202102, 202103, 202104, 202105, 202106)
-PARAM$train$validation   <- c(  201907, 202010 )
-PARAM$train$testing      <- c(  201908,  202009, 202107)
+PARAM$train$training     <- c(   
+                                 201909,  201910, 
+                               202008      )
+PARAM$train$validation   <- c(   202010 )
+PARAM$train$testing      <- c(  201908,  202009)
+
+#para CV train=test=val
 
 PARAM$train$sampling_total  <- 1.0  # 1.0 significa que NO se hace sampling total,  0.3 es quedarse con el 30% de TODOS los registros
 PARAM$train$undersampling_mayoritaria  <- 0.1   # 1.0 significa NO undersampling ,  0.1  es quedarse con el 10% de los CONTINUA

@@ -12,7 +12,7 @@ require("data.table")
 t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento  <- "CAFINAL_MODEL1" #CA9060"
+PARAM$experimento  <- "CAFINAL_MODEL0" #CA9060"
 PARAM$dataset  <- "./datasets/competenciaFINAL_2022.csv.gz"
 
 PARAM$metodo  <- "MachineLearning"     #valores posibles  "MachineLearning"  "EstadisticaClasica"

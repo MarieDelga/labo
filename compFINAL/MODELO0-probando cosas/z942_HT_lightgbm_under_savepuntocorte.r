@@ -21,9 +21,9 @@ require("mlrMBO")
 t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "HTFINAL_MODEL1" #"HT9420"
+PARAM$experimento <- "HTFINAL_MODEL0.0_original" #"HT9420"
 
-PARAM$exp_input  <- "TSFINAL_MODEL1" #"TS9320"
+PARAM$exp_input  <- "TSFINAL_MODEL0" #"TS9320"
 # FIN Parametros del script
 
 
@@ -81,7 +81,7 @@ hs <- makeParamSet(
 
 
 #si usted es ambicioso, y tiene paciencia, podria subir este valor a 100
-kBO_iteraciones  <- 100  #iteraciones de la Optimizacion Bayesiana
+kBO_iteraciones  <- 10  #iteraciones de la Optimizacion Bayesiana
 
 #------------------------------------------------------------------------------
 #graba a un archivo los componentes de lista
@@ -362,7 +362,6 @@ dtrain  <- lgb.Dataset( data=    data.matrix( dataset[ fold_train==1, campos_bue
                         free_raw_data= FALSE
                       )
 
-
 kvalidate  <- FALSE
 ktest  <- FALSE
 kcrossvalidation  <- TRUE
@@ -410,7 +409,7 @@ if( file.exists( "BO_log.txt" ) )
 
 #Aqui comienza la configuracion de mlrMBO
 
-#deobo hacer cross validation o  Train/Validate/Test
+#debo hacer cross validation o  Train/Validate/Test
 if( kcrossvalidation ) {
   funcion_optimizar  <- EstimarGanancia_lightgbmCV
 } else {
