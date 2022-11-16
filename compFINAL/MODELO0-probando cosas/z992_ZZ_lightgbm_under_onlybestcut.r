@@ -15,10 +15,10 @@ require("lightgbm")
 t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento  <- "ZZFINAL_MODEL0.1_cv" #"ZZ9420"
-PARAM$exp_input  <-  "HTFINAL_MODEL0.0_original" # "HT9420"
+PARAM$experimento  <- "ZZFINAL_MODEL0.1_CV" #"ZZ9420"
+PARAM$exp_input  <-  "HTFINAL_MODEL0.1_CV" # "HT9420"
 
-PARAM$modelos  <- 2
+PARAM$modelos  <-1
 # FIN Parametros del script
 
 ksemilla  <- 432557
@@ -56,6 +56,9 @@ dataset  <- fread( arch_dataset )
 arch_future  <- paste0( base_dir, "exp/", TS, "/dataset_future.csv.gz" )
 dfuture <- fread( arch_future )
 
+#MAR leo el dataset donde voy a testear el modelo final
+arch_test  <- paste0( base_dir, "exp/", TS, "/dataset_test.csv.gz" )
+dtest <- fread( arch_test )
 
 #defino la clase binaria
 dataset[ , clase01 := ifelse( clase_ternaria %in% c("BAJA+1","BAJA+2"), 1, 0 )  ]
@@ -84,13 +87,15 @@ for( i in  1:PARAM$modelos )
                         )
 
   ganancia  <- parametros$ganancia
+  
+  prob_corte <-parametros$prob_corte
 
   #elimino los parametros que no son de lightgbm
   parametros$experimento  <- NULL
   parametros$cols         <- NULL
   parametros$rows         <- NULL
   parametros$fecha        <- NULL
-  parametros$prob_corte   <- NULL ##MAR
+  parametros$prob_corte   <- NULL 
   parametros$estimulos    <- NULL
   parametros$ganancia     <- NULL
   parametros$iteracion_bayesiana  <- NULL
@@ -121,15 +126,15 @@ for( i in  1:PARAM$modelos )
   lgb.save( modelo_final,
             file= arch_modelo )
 
-  #creo y grabo la importancia de variables
-  tb_importancia  <- as.data.table( lgb.importance( modelo_final ) )
-  fwrite( tb_importancia,
-          file= paste0( "impo_", 
-                        sprintf( "%02d", i ),
-                        "_",
-                        sprintf( "%03d", iteracion_bayesiana ),
-                        ".txt" ),
-          sep= "\t" )
+  #creo y grabo la importancia de variables #MAR tarda mucho
+  #tb_importancia  <- as.data.table( lgb.importance( modelo_final ) )
+  #fwrite( tb_importancia,
+  #        file= paste0( "impo_", 
+  #                      sprintf( "%02d", i ),
+  #                      "_",
+  #                      sprintf( "%03d", iteracion_bayesiana ),
+  #                      ".txt" ),
+  #        sep= "\t" )
 
 
   #genero la prediccion, Scoring
@@ -149,7 +154,42 @@ for( i in  1:PARAM$modelos )
   fwrite( tb_prediccion,
           file= nom_pred,
           sep= "\t" )
-
+  
+  
+  #genero la prediccion test, Scoring #MAR
+  prediccion_test  <- predict( modelo_final,
+                          data.matrix( dtest[ , campos_buenos, with=FALSE ] ) )
+  
+  tb_prediccion_test  <- dtest[  , list( numero_de_cliente, foto_mes ) ]
+  tb_prediccion_test[ , prob := prediccion_test ]
+  
+  
+  nom_pred  <- paste0( "pred_test-BOrankmodel_",
+                       sprintf( "%02d", i ),
+                       "_iter-",
+                       sprintf( "%03d", iteracion_bayesiana),
+                       ".csv"  )
+  
+  fwrite( tb_prediccion_test,
+          file= nom_pred,
+          sep= "\t" )
+  
+  # genero archivo con corte optimo de BO
+  
+  tb_prediccion[  , Predicted := 0L ]
+  tb_prediccion[ 1:prob_corte, Predicted := 1L ]
+  
+  nom_submit  <- paste0( PARAM$experimento, 
+                         "_Optimo",
+                         "_",
+                         sprintf( "%03d", iteracion_bayesiana ),
+                         "_",
+                         sprintf( "%05d", prob_corte ),
+                         ".csv" )
+  
+  fwrite(  tb_prediccion[ , list( numero_de_cliente, Predicted ) ],
+           file= nom_submit,
+           sep= "," )
 
   #genero los archivos para Kaggle
   cortes  <- seq( from=  7000,
