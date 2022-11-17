@@ -177,18 +177,18 @@ EstimarGanancia_lightgbm  <- function( x )
   ganancia_test_normalizada  <- ganancia_test
 
 
-  #voy grabando las mejores column importance
-  if( ganancia_test_normalizada >  GLOBAL_ganancia )
-  {
-    GLOBAL_ganancia  <<- ganancia_test_normalizada
-    tb_importancia    <- as.data.table( lgb.importance( modelo_train ) )
+  #voy grabando las mejores column importance #MAR tarda mucho
+  #if( ganancia_test_normalizada >  GLOBAL_ganancia )
+  #{
+  #  GLOBAL_ganancia  <<- ganancia_test_normalizada
+  #  tb_importancia    <- as.data.table( lgb.importance( modelo_train ) )
 
-    fwrite( tb_importancia,
-            file= paste0( "impo_", GLOBAL_iteracion, ".txt" ),
-            sep= "\t" )
+  #  fwrite( tb_importancia,
+  #          file= paste0( "impo_", GLOBAL_iteracion, ".txt" ),
+  #          sep= "\t" )
 
-    rm( tb_importancia )
-  }
+  #  rm( tb_importancia )
+  #}
 
 
   #logueo final
