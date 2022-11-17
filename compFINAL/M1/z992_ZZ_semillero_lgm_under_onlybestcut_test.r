@@ -19,7 +19,7 @@ require("primes")
 t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento  <- "ZZFINAL_semillero_MODEL6" #"ZZ9420"
+PARAM$experimento  <- "ZZFINAL_semillero_MODEL7" #"ZZ9420"
 PARAM$exp_input  <-  "HTFINAL_MODEL0.1_CV" # "HT9420"
 
 PARAM$modelos  <- 1
@@ -28,7 +28,7 @@ PARAM$modelos  <- 1
 ksemilla  <- 432557
 
 PARAM$semilla_primos <- 697157
-PARAM$semillerio <- 100 # ¿De cuanto será nuestro semillerio?
+PARAM$semillerio <- 10 # ¿De cuanto será nuestro semillerio?
 PARAM$indice_inicio_semilla <- 1
 PARAM$indice_fin_semilla <- 10
 
@@ -94,7 +94,7 @@ for( i in  1:PARAM$modelos )
 {
   for( ksemilla in ksemillas[PARAM$indice_inicio_semilla:PARAM$indice_fin_semilla] )
   {
-
+    
     # optimización: si los archivos ya existen, puedo hacer skip de esta semilla
     nom_submit <- paste0(
       PARAM$experimento,
@@ -123,14 +123,14 @@ for( i in  1:PARAM$modelos )
     }
     
     message("procesando semilla ", ksemilla) # un poco de debug
-  
-  
-  
+    
+    
+    
     parametros  <- as.list( copy( tb_log[ i ] ) )
     iteracion_bayesiana  <- parametros$iteracion_bayesiana
     
     
-  
+    
     arch_modelo  <- paste0( "modelo_" ,
                             sprintf( "%02d", i ),
                             "_",
@@ -138,19 +138,19 @@ for( i in  1:PARAM$modelos )
                             ".model" )
     message("Creando dataset ")
     timestamp()  
-  
+    
     #creo CADA VEZ el dataset de lightgbm
     dtrain  <- lgb.Dataset( data=    data.matrix( dataset[ , campos_buenos, with=FALSE] ),
                             label=   dataset[ , clase01],
                             weight=  dataset[ , ifelse( clase_ternaria %in% c("BAJA+2"), 1.0000001, 1.0)],
                             free_raw_data= FALSE
-                          )
+    )
     timestamp()
-  
+    
     ganancia  <- parametros$ganancia
     
     prob_corte <-parametros$prob_corte
-  
+    
     #elimino los parametros que no son de lightgbm
     parametros$experimento  <- NULL
     parametros$cols         <- NULL
@@ -160,7 +160,7 @@ for( i in  1:PARAM$modelos )
     parametros$estimulos    <- NULL
     parametros$ganancia     <- NULL
     parametros$iteracion_bayesiana  <- NULL
-  
+    
     if( ! ("leaf_size_log" %in% names(parametros) ) )  stop( "El Hyperparameter Tuning debe tener en BO_log.txt  el pseudo hiperparametro  lead_size_log.\n" )
     if( ! ("coverage" %in% names(parametros) ) ) stop( "El Hyperparameter Tuning debe tener en BO_log.txt  el pseudo hiperparametro  coverage.\n" )
     
@@ -169,11 +169,11 @@ for( i in  1:PARAM$modelos )
     #Luego la cantidad de hojas en funcion del valor anterior, el coverage, y la cantidad de registros
     parametros$num_leaves  <-  pmin( 131072, pmax( 2,  round( parametros$coverage * nrow( dtrain ) / parametros$min_data_in_leaf ) ) )
     cat( "min_data_in_leaf:", parametros$min_data_in_leaf,  ",  num_leaves:", parametros$num_leaves, "\n" )
-  
+    
     #ya no me hacen falta
     parametros$leaf_size_log  <- NULL
     parametros$coverage  <- NULL
-  
+    
     #Utilizo la semilla definida en este script
     parametros$seed  <- ksemilla
     
@@ -185,11 +185,11 @@ for( i in  1:PARAM$modelos )
     
     timestamp()
     
-
+    
     #grabo el modelo, achivo .model
     lgb.save( modelo_final,
               file= arch_modelo )
-  
+    
     #creo y grabo la importancia de variables
     #tb_importancia  <- as.data.table( lgb.importance( modelo_final ) )
     #fwrite( tb_importancia,
@@ -199,17 +199,17 @@ for( i in  1:PARAM$modelos )
     #                      sprintf( "%03d", iteracion_bayesiana ),
     #                      ".txt" ),
     #        sep= "\t" )
-  
+    
     message("Prediciendo")
     timestamp()
     
     #genero la prediccion, Scoring
     prediccion  <- predict( modelo_final,
                             data.matrix( dfuture[ , campos_buenos, with=FALSE ] ) )
-  
+    
     tb_prediccion  <- dfuture[  , list( numero_de_cliente, foto_mes ) ]
     tb_prediccion[ , prob := prediccion ]
-  
+    
     timestamp()
     
     nom_pred  <- paste0( "pred-future--modelRank_",
@@ -219,11 +219,11 @@ for( i in  1:PARAM$modelos )
                          "--seed_",
                          sprintf("%07d",ksemilla),
                          ".csv"  )
-  
+    
     fwrite( tb_prediccion,
             file= nom_pred,
             sep= "\t" )
-  
+    
     #genero la prediccion test, Scoring #MAR
     prediccion_test  <- predict( modelo_final,
                                  data.matrix( dtest[ , campos_buenos, with=FALSE ] ) )
@@ -244,7 +244,7 @@ for( i in  1:PARAM$modelos )
             file= nom_pred,
             sep= "\t" )
     
-    # genero archivo con corte optimo de BO
+    # genero archivo con corte optimo de BO #MAR
     
     setorder( tb_prediccion, -prob )
     
@@ -265,7 +265,7 @@ for( i in  1:PARAM$modelos )
              file= nom_submit,
              sep= "," )
     
-    # genero archivo con corte optimo de BO test
+    # genero archivo test con corte optimo de BO test #MAR
     
     setorder( tb_prediccion_test, -prob )
     
@@ -292,15 +292,15 @@ for( i in  1:PARAM$modelos )
     #cortes  <- seq( from=  7000,
     #                to=   20000,
     #                by=     500 )
-  
-  
+    
+    
     #setorder( tb_prediccion, -prob )
-  
+    
     #for( corte in cortes )
     #{
     #  tb_prediccion[  , Predicted := 0L ]
     #  tb_prediccion[ 1:corte, Predicted := 1L ]
-  
+    
     #  nom_submit  <- paste0( PARAM$experimento, 
     #                         "_",
     #                         sprintf( "%02d", i ),
@@ -309,26 +309,26 @@ for( i in  1:PARAM$modelos )
     #                         "_",
     #                         sprintf( "%05d", corte ),
     #                         ".csv" )
-  
+    
     #  fwrite(  tb_prediccion[ , list( numero_de_cliente, Predicted ) ],
     #           file= nom_submit,
     #           sep= "," )
     #}
-
-
     
     
-  #borro y limpio la memoria para la vuelta siguiente del for
-  rm( tb_prediccion )
-  rm( tb_prediccion_test )
-  #rm( tb_importancia )
-  rm( modelo_final)
-  rm( parametros )
-  rm( dtrain )
-  gc()
+    
+    
+    #borro y limpio la memoria para la vuelta siguiente del for
+    rm( tb_prediccion )
+    rm( tb_prediccion_test )
+    #rm( tb_importancia )
+    rm( modelo_final)
+    rm( parametros )
+    rm( dtrain )
+    gc()
   }
   
-
+  
 }
 
 ##MAR guardar archivo de real test
