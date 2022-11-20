@@ -21,9 +21,9 @@ require("mlrMBO")
 t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "HTFINAL_MODEL1" #"HT9420"
+PARAM$experimento <- "4F_HT_M3" #"HT9420"
 
-PARAM$exp_input  <- "TSFINAL_MODEL1" #"TS9320"
+PARAM$exp_input  <- "3F_TS_M3" #"TS9320"
 # FIN Parametros del script
 
 
@@ -81,7 +81,7 @@ hs <- makeParamSet(
 
 
 #si usted es ambicioso, y tiene paciencia, podria subir este valor a 100
-kBO_iteraciones  <- 100  #iteraciones de la Optimizacion Bayesiana
+kBO_iteraciones  <- 100 #iteraciones de la Optimizacion Bayesiana
 
 #------------------------------------------------------------------------------
 #graba a un archivo los componentes de lista
@@ -164,10 +164,10 @@ EstimarGanancia_lightgbm  <- function( x )
   prediccion  <- predict( modelo_train, 
                           data.matrix( dataset_test[ , campos_buenos, with=FALSE]) )
 
-  tbl  <- dataset_test[ , list(clase_ternaria) ]
+  tbl  <- dataset_test[ , list(clase_completa) ]
   tbl[ , prob := prediccion ]
   ganancia_test  <- tbl[ prob >= prob_corte, 
-                         sum( ifelse(clase_ternaria=="BAJA+2", 78000, -2000 ) )]
+                         sum( ifelse(clase_completa=="BAJA+2", 78000, -2000 ) )]
 
   cantidad_test_normalizada  <- tbl[ prob >= prob_corte, .N ]
 
@@ -177,18 +177,18 @@ EstimarGanancia_lightgbm  <- function( x )
   ganancia_test_normalizada  <- ganancia_test
 
 
-  #voy grabando las mejores column importance
-  if( ganancia_test_normalizada >  GLOBAL_ganancia )
-  {
-    GLOBAL_ganancia  <<- ganancia_test_normalizada
-    tb_importancia    <- as.data.table( lgb.importance( modelo_train ) )
+  #voy grabando las mejores column importance #MAR tarda mucho
+  #if( ganancia_test_normalizada >  GLOBAL_ganancia )
+  #{
+  #  GLOBAL_ganancia  <<- ganancia_test_normalizada
+  #  tb_importancia    <- as.data.table( lgb.importance( modelo_train ) )
 
-    fwrite( tb_importancia,
-            file= paste0( "impo_", GLOBAL_iteracion, ".txt" ),
-            sep= "\t" )
+  #  fwrite( tb_importancia,
+  #          file= paste0( "impo_", GLOBAL_iteracion, ".txt" ),
+  #          sep= "\t" )
 
-    rm( tb_importancia )
-  }
+  #  rm( tb_importancia )
+  #}
 
 
   #logueo final
@@ -349,16 +349,16 @@ cat( PARAM$exp_input,
      append= FALSE )
 
 #defino la clase binaria clase01
-dataset[  , clase01 := ifelse( clase_ternaria=="CONTINUA", 0L, 1L ) ]
+dataset[  , clase01 := ifelse( clase_completa=="CONTINUA", 0L, 1L ) ]
 
 
 #los campos que se pueden utilizar para la prediccion
-campos_buenos  <- setdiff( copy(colnames( dataset )), c( "clase01", "clase_ternaria", "fold_train", "fold_validate", "fold_test" ) )
+campos_buenos  <- setdiff( copy(colnames( dataset )), c( "clase01", "clase_completa", "fold_train", "fold_validate", "fold_test" ) )
 
 #la particion de train siempre va
 dtrain  <- lgb.Dataset( data=    data.matrix( dataset[ fold_train==1, campos_buenos, with=FALSE] ),
                         label=   dataset[ fold_train==1, clase01 ],
-                        weight=  dataset[ fold_train==1, ifelse( clase_ternaria == "BAJA+2", 1.0000001, 1.0) ],
+                        weight=  dataset[ fold_train==1, ifelse( clase_completa == "BAJA+2", 1.0000001, 1.0) ],
                         free_raw_data= FALSE
                       )
 
@@ -463,3 +463,4 @@ time<-list(Sys.time() - t0)
 fwrite( time, 
         file= "time.csv", 
         sep= "," )
+print(time)

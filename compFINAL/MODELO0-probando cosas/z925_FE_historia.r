@@ -19,9 +19,9 @@ require("lightgbm")
 t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "FEFINAL_MODEL1" # "FE9250"
+PARAM$experimento <- "FEFINAL_MODEL0" # "FE9250"
 
-PARAM$exp_input  <- "DRFINAL_MODEL1" # "DR9141"
+PARAM$exp_input  <- "DRFINAL_MODEL0" # "DR9141"
 
 PARAM$lag1  <- TRUE
 PARAM$lag2  <- TRUE

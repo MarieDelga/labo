@@ -21,9 +21,9 @@ require("mlrMBO")
 t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "HTFINAL_MODEL1" #"HT9420"
+PARAM$experimento <- "HTFINAL_MODEL0.0_original" #"HT9420"
 
-PARAM$exp_input  <- "TSFINAL_MODEL1" #"TS9320"
+PARAM$exp_input  <- "TSFINAL_MODEL0" #"TS9320"
 # FIN Parametros del script
 
 
@@ -463,3 +463,4 @@ time<-list(Sys.time() - t0)
 fwrite( time, 
         file= "time.csv", 
         sep= "," )
+print(time)

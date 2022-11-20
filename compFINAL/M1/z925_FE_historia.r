@@ -19,9 +19,9 @@ require("lightgbm")
 t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "FEFINAL_MODEL1" # "FE9250"
+PARAM$experimento <- "2F_FE_M1" # "FE9250"
 
-PARAM$exp_input  <- "DRFINAL_MODEL1" # "DR9141"
+PARAM$exp_input  <- "1F_DR_M1" # "DR9141"
 
 PARAM$lag1  <- TRUE
 PARAM$lag2  <- TRUE
@@ -364,7 +364,7 @@ if( PARAM$lag2 )
   }
 }
 
-if( PARAM$lag2 )
+if( PARAM$lag3 )
 {
   #creo los campos lags de orden 3
   dataset[ , paste0( cols_lagueables, "_lag3") := shift(.SD, 3, NA, "lag"), 
@@ -378,7 +378,7 @@ if( PARAM$lag2 )
   }
 }
 
-if( PARAM$lag2 )
+if( PARAM$lag6 )
 {
   #creo los campos lags de orden 6
   dataset[ , paste0( cols_lagueables, "_lag6") := shift(.SD, 6, NA, "lag"), 
@@ -392,10 +392,10 @@ if( PARAM$lag2 )
   }
 }
 
-if( PARAM$lag2 )
+if( PARAM$lag9 )
 {
   #creo los campos lags de orden 9
-  dataset[ , paste0( cols_lagueables, "_lag2") := shift(.SD, 9, NA, "lag"), 
+  dataset[ , paste0( cols_lagueables, "_lag9") := shift(.SD, 9, NA, "lag"), 
            by= numero_de_cliente, 
            .SDcols= cols_lagueables ]
   
@@ -406,7 +406,7 @@ if( PARAM$lag2 )
   }
 }
 
-if( PARAM$lag2 )
+if( PARAM$lag12 )
 {
   #creo los campos lags de orden 12
   dataset[ , paste0( cols_lagueables, "_lag12") := shift(.SD, 12, NA, "lag"), 
@@ -445,7 +445,7 @@ if( PARAM$Tendencias )
 {
   TendenciaYmuchomas( dataset, 
                       cols= cols_lagueables,
-                      ventana=   3,      # 6 meses de historia
+                      ventana=   3,      # 3 meses de historia
                       tendencia= TRUE,
                       minimo=    TRUE,
                       maximo=    TRUE,

@@ -12,16 +12,16 @@ gc()             #garbage collection
 require("data.table")
 
 require("lightgbm")
-
+t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento  <- "ZZ9420"
-PARAM$exp_input  <- "HT9420"
+PARAM$experimento  <- "ZZFINAL_MODEL1" #"ZZ9420"
+PARAM$exp_input  <-  "HTFINAL_MODEL1" # "HT9420"
 
 PARAM$modelos  <- 2
 # FIN Parametros del script
 
-ksemilla  <- 102191
+ksemilla  <- 432557
 
 #------------------------------------------------------------------------------
 options(error = function() { 
@@ -188,4 +188,10 @@ for( i in  1:PARAM$modelos )
   rm( dtrain )
   gc()
 }
+t0 = 
 
+time<-list(Sys.time() - t0)
+
+fwrite( time, 
+        file= "time.csv", 
+        sep= "," )

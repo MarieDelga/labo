@@ -12,12 +12,11 @@ gc()             #garbage collection
 require("data.table")
 
 require("lightgbm")
-
-t0 <- Sys.time()
+t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento  <- "ZZFINAL1" #"ZZ9420"
-PARAM$exp_input  <- "HTFINAL1" #"HT9420"
+PARAM$experimento  <- "ZZFINAL_MODEL1" #"ZZ9420"
+PARAM$exp_input  <-  "HTFINAL_MODEL1" # "HT9420"
 
 PARAM$modelos  <- 2
 # FIN Parametros del script
@@ -57,19 +56,11 @@ dataset  <- fread( arch_dataset )
 arch_future  <- paste0( base_dir, "exp/", TS, "/dataset_future.csv.gz" )
 dfuture <- fread( arch_future )
 
-#MAR leo el dataset validate donde voy a testear el modelo final
-arch_validate  <- paste0( base_dir, "exp/", TS, "/dataset_training.csv.gz" )
-dataset_training <- fread( arch_validate )
-dvalidate  <- lgb.Dataset( data=  data.matrix( dataset_training[ fold_validate==1, campos_buenos, with=FALSE] ),
-                           label= dataset_training[ fold_validate==1, clase01 ],
-                           free_raw_data= FALSE  )
-
-
 
 #defino la clase binaria
-dataset[ , clase01 := ifelse( clase_completa %in% c("BAJA+1","BAJA+2", "BAJA+3"), 1, 0 )  ]
+dataset[ , clase01 := ifelse( clase_ternaria %in% c("BAJA+1","BAJA+2"), 1, 0 )  ]
 
-campos_buenos  <- setdiff( colnames(dataset), c( "clase_completa", "clase01") )
+campos_buenos  <- setdiff( colnames(dataset), c( "clase_ternaria", "clase01") )
 
 
 #genero un modelo para cada uno de las modelos_qty MEJORES iteraciones de la Bayesian Optimization
@@ -88,7 +79,7 @@ for( i in  1:PARAM$modelos )
   #creo CADA VEZ el dataset de lightgbm
   dtrain  <- lgb.Dataset( data=    data.matrix( dataset[ , campos_buenos, with=FALSE] ),
                           label=   dataset[ , clase01],
-                          weight=  dataset[ , ifelse( clase_completa %in% c("BAJA+2"), 1.0000001, 1.0)],
+                          weight=  dataset[ , ifelse( clase_ternaria %in% c("BAJA+2"), 1.0000001, 1.0)],
                           free_raw_data= FALSE
                         )
 
@@ -145,43 +136,24 @@ for( i in  1:PARAM$modelos )
   prediccion  <- predict( modelo_final,
                           data.matrix( dfuture[ , campos_buenos, with=FALSE ] ) )
 
-  
   tb_prediccion  <- dfuture[  , list( numero_de_cliente, foto_mes ) ]
   tb_prediccion[ , prob := prediccion ]
-  
-  
+
+
   nom_pred  <- paste0( "pred_",
                        sprintf( "%02d", i ),
                        "_",
                        sprintf( "%03d", iteracion_bayesiana),
                        ".csv"  )
-  
+
   fwrite( tb_prediccion,
           file= nom_pred,
-          sep= "\t" )
-  
-  #MAR genero la prediccion para validacion, Scoring
-  prediccion_validate  <- predict( modelo_final,
-                          data.matrix( dvalidate[ , campos_buenos, with=FALSE ] ) )
-  
-  tb_prediccion_validate   <- dvalidate[  , list( numero_de_cliente, foto_mes, clase_completa ) ]
-  tb_prediccion_validate [ , prob := prediccion_validate  ]
-  
-  
-  nom_pred_validate   <- paste0( "pred_validate_",
-                       sprintf( "%02d", i ),
-                       "_",
-                       sprintf( "%03d", iteracion_bayesiana),
-                       ".csv"  )
-  
-  fwrite( tb_prediccion_validate ,
-          file= nom_pred_validate ,
           sep= "\t" )
 
 
   #genero los archivos para Kaggle
   cortes  <- seq( from=  7000,
-                  to=   20000,
+                  to=   11000,
                   by=     500 )
 
 
@@ -222,4 +194,3 @@ time<-list(Sys.time() - t0)
 fwrite( time, 
         file= "time.csv", 
         sep= "," )
-

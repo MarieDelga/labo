@@ -463,3 +463,4 @@ time<-list(Sys.time() - t0)
 fwrite( time, 
         file= "time.csv", 
         sep= "," )
+print(time)

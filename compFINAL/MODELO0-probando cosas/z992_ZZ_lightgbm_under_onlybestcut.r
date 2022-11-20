@@ -12,14 +12,13 @@ gc()             #garbage collection
 require("data.table")
 
 require("lightgbm")
-
-t0 <- Sys.time()
+t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento  <- "ZZFINAL1" #"ZZ9420"
-PARAM$exp_input  <- "HTFINAL1" #"HT9420"
+PARAM$experimento  <- "ZZFINAL_MODEL0.1_CV" #"ZZ9420"
+PARAM$exp_input  <-  "HTFINAL_MODEL0.1_CV" # "HT9420"
 
-PARAM$modelos  <- 2
+PARAM$modelos  <-1
 # FIN Parametros del script
 
 ksemilla  <- 432557
@@ -57,19 +56,14 @@ dataset  <- fread( arch_dataset )
 arch_future  <- paste0( base_dir, "exp/", TS, "/dataset_future.csv.gz" )
 dfuture <- fread( arch_future )
 
-#MAR leo el dataset validate donde voy a testear el modelo final
-arch_validate  <- paste0( base_dir, "exp/", TS, "/dataset_training.csv.gz" )
-dataset_training <- fread( arch_validate )
-dvalidate  <- lgb.Dataset( data=  data.matrix( dataset_training[ fold_validate==1, campos_buenos, with=FALSE] ),
-                           label= dataset_training[ fold_validate==1, clase01 ],
-                           free_raw_data= FALSE  )
-
-
+#MAR leo el dataset donde voy a testear el modelo final
+arch_test  <- paste0( base_dir, "exp/", TS, "/dataset_test.csv.gz" )
+dtest <- fread( arch_test )
 
 #defino la clase binaria
-dataset[ , clase01 := ifelse( clase_completa %in% c("BAJA+1","BAJA+2", "BAJA+3"), 1, 0 )  ]
+dataset[ , clase01 := ifelse( clase_ternaria %in% c("BAJA+1","BAJA+2"), 1, 0 )  ]
 
-campos_buenos  <- setdiff( colnames(dataset), c( "clase_completa", "clase01") )
+campos_buenos  <- setdiff( colnames(dataset), c( "clase_ternaria", "clase01") )
 
 
 #genero un modelo para cada uno de las modelos_qty MEJORES iteraciones de la Bayesian Optimization
@@ -88,18 +82,20 @@ for( i in  1:PARAM$modelos )
   #creo CADA VEZ el dataset de lightgbm
   dtrain  <- lgb.Dataset( data=    data.matrix( dataset[ , campos_buenos, with=FALSE] ),
                           label=   dataset[ , clase01],
-                          weight=  dataset[ , ifelse( clase_completa %in% c("BAJA+2"), 1.0000001, 1.0)],
+                          weight=  dataset[ , ifelse( clase_ternaria %in% c("BAJA+2"), 1.0000001, 1.0)],
                           free_raw_data= FALSE
                         )
 
   ganancia  <- parametros$ganancia
+  
+  prob_corte <-parametros$prob_corte
 
   #elimino los parametros que no son de lightgbm
   parametros$experimento  <- NULL
   parametros$cols         <- NULL
   parametros$rows         <- NULL
   parametros$fecha        <- NULL
-  parametros$prob_corte   <- NULL
+  parametros$prob_corte   <- NULL 
   parametros$estimulos    <- NULL
   parametros$ganancia     <- NULL
   parametros$iteracion_bayesiana  <- NULL
@@ -130,58 +126,74 @@ for( i in  1:PARAM$modelos )
   lgb.save( modelo_final,
             file= arch_modelo )
 
-  #creo y grabo la importancia de variables
-  tb_importancia  <- as.data.table( lgb.importance( modelo_final ) )
-  fwrite( tb_importancia,
-          file= paste0( "impo_", 
-                        sprintf( "%02d", i ),
-                        "_",
-                        sprintf( "%03d", iteracion_bayesiana ),
-                        ".txt" ),
-          sep= "\t" )
+  #creo y grabo la importancia de variables #MAR tarda mucho
+  #tb_importancia  <- as.data.table( lgb.importance( modelo_final ) )
+  #fwrite( tb_importancia,
+  #        file= paste0( "impo_", 
+  #                      sprintf( "%02d", i ),
+  #                      "_",
+  #                      sprintf( "%03d", iteracion_bayesiana ),
+  #                      ".txt" ),
+  #        sep= "\t" )
 
 
   #genero la prediccion, Scoring
   prediccion  <- predict( modelo_final,
                           data.matrix( dfuture[ , campos_buenos, with=FALSE ] ) )
 
-  
   tb_prediccion  <- dfuture[  , list( numero_de_cliente, foto_mes ) ]
   tb_prediccion[ , prob := prediccion ]
-  
-  
+
+
   nom_pred  <- paste0( "pred_",
                        sprintf( "%02d", i ),
                        "_",
                        sprintf( "%03d", iteracion_bayesiana),
                        ".csv"  )
-  
+
   fwrite( tb_prediccion,
           file= nom_pred,
           sep= "\t" )
   
-  #MAR genero la prediccion para validacion, Scoring
-  prediccion_validate  <- predict( modelo_final,
-                          data.matrix( dvalidate[ , campos_buenos, with=FALSE ] ) )
   
-  tb_prediccion_validate   <- dvalidate[  , list( numero_de_cliente, foto_mes, clase_completa ) ]
-  tb_prediccion_validate [ , prob := prediccion_validate  ]
+  #genero la prediccion test, Scoring #MAR
+  prediccion_test  <- predict( modelo_final,
+                          data.matrix( dtest[ , campos_buenos, with=FALSE ] ) )
+  
+  tb_prediccion_test  <- dtest[  , list( numero_de_cliente, foto_mes ) ]
+  tb_prediccion_test[ , prob := prediccion_test ]
   
   
-  nom_pred_validate   <- paste0( "pred_validate_",
+  nom_pred  <- paste0( "pred_test-BOrankmodel_",
                        sprintf( "%02d", i ),
-                       "_",
+                       "_iter-",
                        sprintf( "%03d", iteracion_bayesiana),
                        ".csv"  )
   
-  fwrite( tb_prediccion_validate ,
-          file= nom_pred_validate ,
+  fwrite( tb_prediccion_test,
+          file= nom_pred,
           sep= "\t" )
-
+  
+  # genero archivo con corte optimo de BO
+  
+  tb_prediccion[  , Predicted := 0L ]
+  tb_prediccion[ 1:prob_corte, Predicted := 1L ]
+  
+  nom_submit  <- paste0( PARAM$experimento, 
+                         "_Optimo",
+                         "_",
+                         sprintf( "%03d", iteracion_bayesiana ),
+                         "_",
+                         sprintf( "%05d", prob_corte ),
+                         ".csv" )
+  
+  fwrite(  tb_prediccion[ , list( numero_de_cliente, Predicted ) ],
+           file= nom_submit,
+           sep= "," )
 
   #genero los archivos para Kaggle
   cortes  <- seq( from=  7000,
-                  to=   20000,
+                  to=   11000,
                   by=     500 )
 
 
@@ -222,4 +234,3 @@ time<-list(Sys.time() - t0)
 fwrite( time, 
         file= "time.csv", 
         sep= "," )
-

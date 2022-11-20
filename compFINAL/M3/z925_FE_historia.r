@@ -19,9 +19,9 @@ require("lightgbm")
 t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "FEFINAL_MODEL1" # "FE9250"
+PARAM$experimento <- "2F_FE_M3" # "FE9250"
 
-PARAM$exp_input  <- "DRFINAL_MODEL1" # "DR9141"
+PARAM$exp_input  <- "1F_DR_M3" # "DR9141"
 
 PARAM$lag1  <- TRUE
 PARAM$lag2  <- TRUE
@@ -161,9 +161,9 @@ TendenciaYmuchomas  <- function( dataset, cols, ventana=6, tendencia=TRUE, minim
 AgregaVarRandomForest  <- function( num.trees, max.depth, min.node.size, mtry)
 {
   gc()
-  dataset[ , clase01:= ifelse( clase_ternaria=="CONTINUA", 0, 1 ) ]
+  dataset[ , clase01:= ifelse( clase_completa=="CONTINUA", 0, 1 ) ]
 
-  campos_buenos  <- setdiff( colnames(dataset), c("clase_ternaria" ) )
+  campos_buenos  <- setdiff( colnames(dataset), c("clase_completa" ) )
 
   dataset_rf  <- copy( dataset[ , campos_buenos, with=FALSE] )
   azar  <- runif( nrow(dataset_rf) )
@@ -173,7 +173,7 @@ AgregaVarRandomForest  <- function( num.trees, max.depth, min.node.size, mtry)
   #Leo Breiman, ¿por que le temias a los nulos?
   dataset_rf  <- na.roughfix( dataset_rf )
 
-  campos_buenos  <- setdiff( colnames(dataset_rf), c("clase_ternaria","entrenamiento" ) )
+  campos_buenos  <- setdiff( colnames(dataset_rf), c("clase_completa","entrenamiento" ) )
   modelo  <- ranger( formula= "clase01 ~ .",
                      data=  dataset_rf[ entrenamiento==1L, campos_buenos, with=FALSE  ] ,
                      classification= TRUE,
@@ -243,24 +243,24 @@ GVEZ <- 1
 CanaritosAsesinos  <- function( canaritos_ratio=0.2 )
 {
   gc()
-  dataset[ , clase01:= ifelse( clase_ternaria=="CONTINUA", 0, 1 ) ]
+  dataset[ , clase01:= ifelse( clase_completa=="CONTINUA", 0, 1 ) ]
 
   for( i  in 1:(ncol(dataset)*canaritos_ratio))  dataset[ , paste0("canarito", i ) :=  runif( nrow(dataset))]
 
-  campos_buenos  <- setdiff( colnames(dataset), c("clase_ternaria","clase01", "foto_mes" ) )
+  campos_buenos  <- setdiff( colnames(dataset), c("clase_completa","clase01", "foto_mes" ) )
 
   azar  <- runif( nrow(dataset) )
   dataset[ , entrenamiento := foto_mes>= 202101 &  foto_mes<= 202103  & ( clase01==1 | azar < 0.10 ) ]
 
   dtrain  <- lgb.Dataset( data=    data.matrix(  dataset[ entrenamiento==TRUE, campos_buenos, with=FALSE]),
                           label=   dataset[ entrenamiento==TRUE, clase01],
-                          weight=  dataset[ entrenamiento==TRUE, ifelse(clase_ternaria=="BAJA+2", 1.0000001, 1.0)],
+                          weight=  dataset[ entrenamiento==TRUE, ifelse(clase_completa=="BAJA+2", 1.0000001, 1.0)],
                           free_raw_data= FALSE
                         )
 
   dvalid  <- lgb.Dataset( data=    data.matrix(  dataset[ foto_mes==202105, campos_buenos, with=FALSE]),
                           label=   dataset[ foto_mes==202105, clase01],
-                          weight=  dataset[ foto_mes==202105, ifelse(clase_ternaria=="BAJA+2", 1.0000001, 1.0)],
+                          weight=  dataset[ foto_mes==202105, ifelse(clase_completa=="BAJA+2", 1.0000001, 1.0)],
                           free_raw_data= FALSE
                           )
 
@@ -303,7 +303,7 @@ CanaritosAsesinos  <- function( canaritos_ratio=0.2 )
   umbral  <- tb_importancia[ Feature %like% "canarito", median(pos) + 2*sd(pos) ]  #Atencion corto en la mediana mas DOS desvios!!
 
   col_utiles  <- tb_importancia[ pos < umbral & !( Feature %like% "canarito"),  Feature ]
-  col_utiles  <-  unique( c( col_utiles,  c("numero_de_cliente","foto_mes","clase_ternaria","mes") ) )
+  col_utiles  <-  unique( c( col_utiles,  c("numero_de_cliente","foto_mes","clase_completa","mes") ) )
   col_inutiles  <- setdiff( colnames(dataset), col_utiles )
 
   dataset[  ,  (col_inutiles) := NULL ]
@@ -328,12 +328,22 @@ setwd(paste0( "./exp/", PARAM$experimento, "/"))   #Establezco el Working Direct
 
 #--------------------------------------
 #estas son las columnas a las que se puede agregar lags o media moviles ( todas menos las obvias )
-cols_lagueables  <- copy(  setdiff( colnames(dataset), c("numero_de_cliente", "foto_mes", "clase_ternaria")  ) )
+cols_lagueables  <- copy(  setdiff( colnames(dataset), c("numero_de_cliente", "foto_mes", "clase_completa")  ) )
 
 #ordeno el dataset por <numero_de_cliente, foto_mes> para poder hacer lags
 #  es MUY  importante esta linea
 setorder( dataset, numero_de_cliente, foto_mes )
 
+#---------------------------------------
+#Agrego BAJA+3
+dataset$clase_completa=dataset$clase_ternaria
+dataset[ , "clase_completa_lag1" := shift(.SD, -1, NA, "lag"), by= numero_de_cliente, .SDcols= c("clase_completa") ]
+dataset$clase_completa <- ifelse( (dataset$clase_completa == 'CONTINUA') & (dataset$clase_completa_lag1 != "CONTINUA"), paste0("BAJA+", as.numeric(unlist(regmatches("BAJA+2", gregexpr("[[:digit:]]+", "BAJA+2")) ))+1 ) , dataset$clase_ternaria)
+dataset[,clase_completa_lag1:=NULL]
+dataset[,clase_ternaria:=NULL]
+#dataset[dataset$numero_de_cliente == 99087207, c("clase_ternaria", "clase_completa_lag1", "clase_completa")]
+
+#-------
 
 if( PARAM$lag1 )
 {
@@ -364,7 +374,7 @@ if( PARAM$lag2 )
   }
 }
 
-if( PARAM$lag2 )
+if( PARAM$lag3 )
 {
   #creo los campos lags de orden 3
   dataset[ , paste0( cols_lagueables, "_lag3") := shift(.SD, 3, NA, "lag"), 
@@ -378,7 +388,7 @@ if( PARAM$lag2 )
   }
 }
 
-if( PARAM$lag2 )
+if( PARAM$lag6 )
 {
   #creo los campos lags de orden 6
   dataset[ , paste0( cols_lagueables, "_lag6") := shift(.SD, 6, NA, "lag"), 
@@ -392,10 +402,10 @@ if( PARAM$lag2 )
   }
 }
 
-if( PARAM$lag2 )
+if( PARAM$lag9 )
 {
   #creo los campos lags de orden 9
-  dataset[ , paste0( cols_lagueables, "_lag2") := shift(.SD, 9, NA, "lag"), 
+  dataset[ , paste0( cols_lagueables, "_lag9") := shift(.SD, 9, NA, "lag"), 
            by= numero_de_cliente, 
            .SDcols= cols_lagueables ]
   
@@ -406,7 +416,7 @@ if( PARAM$lag2 )
   }
 }
 
-if( PARAM$lag2 )
+if( PARAM$lag12 )
 {
   #creo los campos lags de orden 12
   dataset[ , paste0( cols_lagueables, "_lag12") := shift(.SD, 12, NA, "lag"), 
@@ -445,7 +455,7 @@ if( PARAM$Tendencias )
 {
   TendenciaYmuchomas( dataset, 
                       cols= cols_lagueables,
-                      ventana=   3,      # 6 meses de historia
+                      ventana=   3,      # 3 meses de historia
                       tendencia= TRUE,
                       minimo=    TRUE,
                       maximo=    TRUE,
@@ -495,3 +505,5 @@ fwrite( time,
 print(time)
 
 print(dim(dataset) )
+
+#corriendo
