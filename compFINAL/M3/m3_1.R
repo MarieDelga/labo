@@ -11,15 +11,15 @@ gc()             #garbage collection
 require("data.table")
 
 
-
+t0 = Sys.time() 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento  <- "DR9145"
+PARAM$experimento  <- "1F_DR_M3" # "DR9141"
 
-PARAM$exp_input  <- "CA9065"
+PARAM$exp_input  <- "0F_CA_M3" #"CA9060"
 
 #valores posibles  "ninguno" "rank_simple" , "rank_cero_fijo" , "deflacion"
-PARAM$metodo  <- "deflacion"
+PARAM$metodo  <- "rank_cero_fijo"
 # FIN Parametros del script
 
 
@@ -31,16 +31,16 @@ AgregarVariables  <- function( dataset )
 {
   gc()
   #INICIO de la seccion donde se deben hacer cambios con variables nuevas
-
+  
   #creo un ctr_quarter que tenga en cuenta cuando los clientes hace 3 menos meses que estan
   dataset[  , ctrx_quarter_normalizado := ctrx_quarter ]
   dataset[ cliente_antiguedad==1 , ctrx_quarter_normalizado := ctrx_quarter * 5 ]
   dataset[ cliente_antiguedad==2 , ctrx_quarter_normalizado := ctrx_quarter * 2 ]
   dataset[ cliente_antiguedad==3 , ctrx_quarter_normalizado := ctrx_quarter * 1.2 ]
-
+  
   #variable extraida de una tesis de maestria de Irlanda
   dataset[  , mpayroll_sobre_edad  := mpayroll / cliente_edad ]
-
+  
   #se crean los nuevos campos para MasterCard  y Visa, teniendo en cuenta los NA's
   #varias formas de combinar Visa_status y Master_status
   dataset[ , vm_status01       := pmax( Master_status,  Visa_status, na.rm = TRUE) ]
@@ -48,19 +48,19 @@ AgregarVariables  <- function( dataset )
   dataset[ , vm_status03       := pmax( ifelse( is.na(Master_status), 10, Master_status) , ifelse( is.na(Visa_status), 10, Visa_status) ) ]
   dataset[ , vm_status04       := ifelse( is.na(Master_status), 10, Master_status)  +  ifelse( is.na(Visa_status), 10, Visa_status)  ]
   dataset[ , vm_status05       := ifelse( is.na(Master_status), 10, Master_status)  +  100*ifelse( is.na(Visa_status), 10, Visa_status)  ]
-
+  
   dataset[ , vm_status06       := ifelse( is.na(Visa_status), 
                                           ifelse( is.na(Master_status), 10, Master_status), 
                                           Visa_status)  ]
-
+  
   dataset[ , mv_status07       := ifelse( is.na(Master_status), 
                                           ifelse( is.na(Visa_status), 10, Visa_status), 
                                           Master_status)  ]
-
-
+  
+  
   #combino MasterCard y Visa
   dataset[ , vm_mfinanciacion_limite := rowSums( cbind( Master_mfinanciacion_limite,  Visa_mfinanciacion_limite) , na.rm=TRUE ) ]
-
+  
   dataset[ , vm_Fvencimiento         := pmin( Master_Fvencimiento, Visa_Fvencimiento, na.rm = TRUE) ]
   dataset[ , vm_Finiciomora          := pmin( Master_Finiciomora, Visa_Finiciomora, na.rm = TRUE) ]
   dataset[ , vm_msaldototal          := rowSums( cbind( Master_msaldototal,  Visa_msaldototal) , na.rm=TRUE ) ]
@@ -80,7 +80,7 @@ AgregarVariables  <- function( dataset )
   dataset[ , vm_cconsumos            := rowSums( cbind( Master_cconsumos,  Visa_cconsumos) , na.rm=TRUE ) ]
   dataset[ , vm_cadelantosefectivo   := rowSums( cbind( Master_cadelantosefectivo,  Visa_cadelantosefectivo) , na.rm=TRUE ) ]
   dataset[ , vm_mpagominimo          := rowSums( cbind( Master_mpagominimo,  Visa_mpagominimo) , na.rm=TRUE ) ]
-
+  
   #a partir de aqui juego con la suma de Mastercard y Visa
   dataset[ , vmr_Master_mlimitecompra:= Master_mlimitecompra / vm_mlimitecompra ]
   dataset[ , vmr_Visa_mlimitecompra  := Visa_mlimitecompra / vm_mlimitecompra ]
@@ -98,9 +98,12 @@ AgregarVariables  <- function( dataset )
   dataset[ , vmr_mpagosdolares       := vm_mpagosdolares / vm_mlimitecompra ]
   dataset[ , vmr_mconsumototal       := vm_mconsumototal  / vm_mlimitecompra ]
   dataset[ , vmr_mpagominimo         := vm_mpagominimo  / vm_mlimitecompra ]
-
+  
   #Aqui debe usted agregar sus propias nuevas variables
-
+  
+  dataset[ , mar_mes := foto_mes %% 100 ]   #En R  %% es el módulo
+  dataset[ , mar_anio :=   floor( foto_mes/100 ) ]  # floor() es quedarse con la parte entera
+  
   #valvula de seguridad para evitar valores infinitos
   #paso los infinitos a NULOS
   infinitos      <- lapply(names(dataset),function(.name) dataset[ , sum(is.infinite(get(.name)))])
@@ -110,8 +113,8 @@ AgregarVariables  <- function( dataset )
     cat( "ATENCION, hay", infinitos_qty, "valores infinitos en tu dataset. Seran pasados a NA\n" )
     dataset[mapply(is.infinite, dataset)] <<- NA
   }
-
-
+  
+  
   #valvula de seguridad para evitar valores NaN  que es 0/0
   #paso los NaN a 0 , decision polemica si las hay
   #se invita a asignar un valor razonable segun la semantica del campo creado
@@ -123,7 +126,7 @@ AgregarVariables  <- function( dataset )
     cat( "Si no te gusta la decision, modifica a gusto el programa!\n\n")
     dataset[mapply(is.nan, dataset)] <<- 0
   }
-
+  
 }
 #------------------------------------------------------------------------------
 #deflaciona por IPC
@@ -136,8 +139,8 @@ drift_deflacion  <- function( campos_monetarios )
                   202001, 202002, 202003, 202004, 202005, 202006,
                   202007, 202008, 202009, 202010, 202011, 202012,
                   202101, 202102, 202103, 202104, 202105, 202106,
-                  202107  )
-
+                  202107, 202108, 202109  )
+  
   vIPC  <- c( 1.9903030878, 1.9174403544, 1.8296186587,
               1.7728862972, 1.7212488323, 1.6776304408,
               1.6431248196, 1.5814483345, 1.4947526791,
@@ -148,16 +151,16 @@ drift_deflacion  <- function( campos_monetarios )
               1.0681100000, 1.0370000000, 1.0000000000,
               0.9680542110, 0.9344152616, 0.8882274350,
               0.8532444140, 0.8251880213, 0.8003763543,
-              0.7763107219  )
-
+              0.7763107219,0.75,0.73  )
+  
   tb_IPC  <- data.table( "foto_mes"= vfoto_mes,
                          "IPC" = vIPC )
-
+  
   dataset[ tb_IPC,
            on= c("foto_mes"),
            (campos_monetarios) :=  .SD * i.IPC ,
            .SDcols = campos_monetarios ]
-
+  
 }
 
 #------------------------------------------------------------------------------
@@ -217,7 +220,7 @@ campos_monetarios  <- campos_monetarios[campos_monetarios %like% "^(m|Visa_m|Mas
 #aqui aplico un metodo para atacar el data drifting
 #hay que probar experimentalmente cual funciona mejor
 switch( 
-PARAM$metodo,
+  PARAM$metodo,
   "ninguno"        = cat( "No hay correccion del data drifting" ),
   "rank_simple"    = drift_rank_simple( campos_monetarios ),
   "rank_cero_fijo" = drift_rank_cero_fijo( campos_monetarios ),
@@ -229,3 +232,13 @@ PARAM$metodo,
 fwrite( dataset,
         file="dataset.csv.gz",
         sep= "," )
+
+time<-list(Sys.time() - t0)
+
+fwrite( time, 
+        file= "time.csv", 
+        sep= "," )
+
+print(time)
+
+print(dim(dataset) )

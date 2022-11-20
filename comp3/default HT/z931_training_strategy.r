@@ -7,7 +7,7 @@
 #limpio la memoria
 rm( list=ls() )  #remove all objects
 gc()             #garbage collection
-
+t0 <- Sys.time()
 require("data.table")
 
 
@@ -92,3 +92,7 @@ fwrite( dataset[ fold_train + fold_validate + fold_test >= 1 , ],
         logical01= TRUE,
         sep= "," )
 
+time<-list(Sys.time() - t0)
+fwrite( time, 
+        file= "time.csv", 
+        sep= "\t" )
